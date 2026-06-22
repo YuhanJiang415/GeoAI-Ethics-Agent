@@ -86,9 +86,12 @@ def main():
         "report": report,
         "triples": clean,
         "graph_paths": graph_paths,     # public graph edges (node names + relations)
-        "track2_count": len(docs),      # count only — no corpus text / filenames
+        "track2_count": len(docs),
+        # Track-2 retrieved chunks shown in full (raw text + source filename),
+        # per explicit choice to expose them on the example page.
+        "track2_docs": [{"source": d.metadata.get("source", "Unknown"),
+                         "content": d.page_content} for d in docs],
         "generated": datetime.date.today().isoformat(),
-        "public_safe": True,
     }
     with open(OUT, "w", encoding="utf-8") as f:
         f.write("window.EXAMPLE_DATA = ")

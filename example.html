@@ -88,8 +88,15 @@
   .note{background:#f0f7ff;border:1px solid #cfe3fb;border-radius:10px;padding:13px 16px;font-size:12.5px;
     line-height:1.6;color:#1e3a5f}
   .note b{color:#0b2a4a}
-  .t2{background:var(--panel);border:1px dashed var(--line);border-radius:10px;padding:13px 16px;
+  .t2{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:13px 16px;
     font-size:12.5px;color:var(--mut);line-height:1.55}
+  .t2 .intro{margin:0 0 4px;color:var(--mut)}
+  .t2chunk{background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--t2);
+    border-radius:9px;padding:11px 13px;margin-top:11px}
+  .t2src{font-size:11px;font-weight:700;color:var(--t2);font-family:ui-monospace,Menlo,monospace;
+    margin-bottom:7px;word-break:break-all}
+  .t2body{font-size:11.5px;color:#334155;line-height:1.55;max-height:180px;overflow:auto;
+    white-space:pre-wrap;background:#fff;border:1px solid var(--line);border-radius:6px;padding:8px 10px}
   #err{background:#fff3f3;color:#b42318;border:1px solid #f3b4b4;border-radius:10px;padding:14px;margin-top:20px;display:none}
 </style>
 </head>
@@ -150,7 +157,7 @@ try{
   document.getElementById("meta").innerHTML=
     `<span class="tag">generated ${esc(D.generated||"")}</span>`+
     `<span class="tag">analyze_xml() · section-aware</span>`+
-    `<span class="tag">public-safe (corpus sources/excerpts omitted)</span>`;
+    `<span class="tag">Track-2 excerpts shown in full</span>`;
 
   // source paper citation
   const s=D.source||{};
@@ -222,11 +229,16 @@ try{
     (D.graph_paths||[]).map(p=>`<div class="path">${esc(p)}</div>`).join("")||
     `<div class="path">No causal edges found.</div>`;
 
-  // track 2 (no corpus content shown)
-  document.getElementById("track2").innerHTML=
-    `<b>${D.track2_count}</b> background literature chunks were retrieved from the FAISS vector store and `+
-    `fed to the auditor for term definitions only. Their raw text and source filenames are omitted here to `+
-    `keep the published page free of corpus data.`;
+  // track 2 — raw retrieved chunks (text + source filename) shown in full
+  const t2=D.track2_docs||[];
+  let t2html=`<p class="intro">The <b>${D.track2_count}</b> background literature chunks the auditor `+
+    `retrieved from the FAISS vector store (used for term definitions only), shown in full with their source:</p>`;
+  if(!t2.length) t2html+=`<p class="intro">(none)</p>`;
+  t2.forEach(c=>{
+    t2html+=`<div class="t2chunk"><div class="t2src">📄 ${esc(c.source)}</div>`+
+      `<div class="t2body">${esc((c.content||"").trim())}</div></div>`;
+  });
+  document.getElementById("track2").innerHTML=t2html;
 
   // legend
   document.getElementById("legend-note").innerHTML=
