@@ -1,6 +1,6 @@
 # GeoAI Ethics Auditor — Visualizations
 
-Interactive visualizations for a master's-thesis project on **GeoAI ethics auditing** — a
+Interactive visualizations for a project on **GeoAI ethics auditing** — a
 dual-track system that distills GeoAI-ethics papers into a causal knowledge graph + vector
 store, then audits new papers against both.
 
