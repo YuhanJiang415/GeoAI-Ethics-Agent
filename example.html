@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>GeoAI Ethics Auditor · Example Run</title>
+<script src="example_data.js"></script>
+<style>
+  :root{
+    --bg:#f6f8fb; --panel:#ffffff; --panel2:#eef1f6; --line:#dfe3ea;
+    --ink:#1f2733; --mut:#6b7480; --acc:#2563eb;
+    --tf:#16a34a; --rm:#d97706; --ei:#dc2626; --mi:#9333ea;
+    --t1:#2563eb; --t2:#0d9488;
+    --ok:#16a34a; --warn:#d97706; --bad:#dc2626;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  a{color:var(--acc);text-decoration:none}
+  .wrap{max-width:1000px;margin:0 auto;padding:34px 26px 80px}
+  .nav{font-size:13px;color:var(--mut);margin-bottom:18px}
+  .nav a{margin-right:16px}
+  header h1{font-size:25px;margin:0 0 6px}
+  header .sub{color:var(--mut);font-size:14px;line-height:1.6;max-width:760px}
+  .meta{font-size:11.5px;color:var(--mut);margin-top:10px}
+  .meta .tag{border:1px solid var(--line);border-radius:20px;padding:3px 10px;margin-right:8px;background:var(--panel)}
+
+  .sectitle{font-size:12px;text-transform:uppercase;letter-spacing:.7px;color:var(--mut);
+    margin:34px 0 12px;display:flex;align-items:center;gap:10px}
+  .sectitle::after{content:"";flex:1;height:1px;background:var(--line)}
+
+  .inputbox{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--acc);
+    border-radius:10px;padding:16px 18px;font-size:14px;line-height:1.65}
+  .inputbox .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--mut);margin-bottom:8px}
+
+  .stats{display:flex;gap:10px;flex-wrap:wrap;margin:4px 0}
+  .st{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 15px;min-width:96px}
+  .st .n{font-size:20px;font-weight:700;line-height:1}
+  .st .l{font-size:10.5px;color:var(--mut);margin-top:4px}
+
+  .report{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px 22px}
+  .report p{margin:0 0 13px;line-height:1.7;font-size:14px}
+  .report p:last-child{margin-bottom:0}
+  details.appendix{margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:0}
+  details.appendix summary{cursor:pointer;padding:12px 16px;font-size:12.5px;color:var(--mut);user-select:none}
+  details.appendix pre{margin:0;padding:0 16px 16px;white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace;
+    font-size:11.5px;line-height:1.5;color:var(--ink)}
+
+  .chain{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:16px;overflow:hidden}
+  .chain .ch-hd{background:var(--panel2);padding:9px 16px;font-size:11px;color:var(--mut);
+    display:flex;align-items:center;gap:8px;letter-spacing:.4px;border-bottom:1px solid var(--line)}
+  .triple{padding:15px 16px;border-bottom:1px solid var(--line)}
+  .triple:last-child{border-bottom:none}
+  .flow{display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:13.5px}
+  .ent{padding:5px 11px;border-radius:8px;font-weight:600;border:1px solid;display:inline-flex;flex-direction:column;line-height:1.2}
+  .ent .ty{font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;opacity:.85;margin-bottom:1px}
+  .rel{display:inline-flex;flex-direction:column;align-items:center;color:var(--mut);font-size:10px}
+  .rel .rname{font-weight:700;letter-spacing:.4px;color:#475569}
+  .rel .ar{font-size:15px;line-height:.8;color:#94a3b8}
+  .badges{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}
+  .b{font-size:10.5px;font-weight:600;border-radius:6px;padding:3px 9px;border:1px solid}
+  .b.harm{color:var(--ei);border-color:var(--ei);background:#fef2f2}
+  .b.prov-graph_exact{color:var(--ok);border-color:var(--ok);background:#f0fdf4}
+  .b.prov-graph_anchored{color:var(--warn);border-color:var(--warn);background:#fffbeb}
+  .b.prov-inferred{color:var(--bad);border-color:var(--bad);background:#fef2f2}
+  .b.qok{color:var(--ok);border-color:var(--ok);background:#f0fdf4}
+  .b.qno{color:var(--bad);border-color:var(--bad);background:#fef2f2}
+  .b.inst-INSTANTIATED{color:#fff;background:var(--bad);border-color:var(--bad)}
+  .b.inst-POTENTIAL{color:var(--warn);border-color:var(--warn);background:#fffbeb}
+  .b.inst-NOT_TRIGGERED{color:var(--mut);border-color:var(--line);background:var(--panel2)}
+  .meta-line{font-size:12px;color:var(--mut);margin-top:10px;line-height:1.55}
+  .meta-line .k{color:#475569;font-weight:600}
+  .quote{margin-top:7px;font-size:12.5px;border-left:3px solid var(--line);padding:3px 0 3px 11px;color:#334155}
+
+  .pathlist{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 4px}
+  .path{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;padding:5px 14px;color:#334155;
+    border-bottom:1px solid #f0f2f6;line-height:1.5}
+  .path:last-child{border-bottom:none}
+  .note{background:#f0f7ff;border:1px solid #cfe3fb;border-radius:10px;padding:13px 16px;font-size:12.5px;
+    line-height:1.6;color:#1e3a5f}
+  .note b{color:#0b2a4a}
+  .t2{background:var(--panel);border:1px dashed var(--line);border-radius:10px;padding:13px 16px;
+    font-size:12.5px;color:var(--mut);line-height:1.55}
+  #err{background:#fff3f3;color:#b42318;border:1px solid #f3b4b4;border-radius:10px;padding:14px;margin-top:20px;display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="nav"><a href="index.html">← Overview</a><a href="workflow.html">Workflow</a><a href="knowledge_graph.html">Knowledge graph</a></div>
+  <header>
+    <h1>Example audit run</h1>
+    <div class="sub">A real run of the <b>DualTrackGeoAIAgent</b> on one synthetic GeoAI system
+      description. This shows the agent's actual output: closed-ontology causal triples, each tagged with
+      verified <b>provenance</b>, a verified verbatim <b>quote</b>, and an <b>instantiation</b> verdict
+      (audit-finding vs disclosure), plus the prose audit it writes from them.</div>
+    <div class="meta" id="meta"></div>
+  </header>
+
+  <div id="err"></div>
+
+  <div class="sectitle">Input audited</div>
+  <div class="inputbox"><div class="lbl">System description (synthetic, not corpus text)</div>
+    <div id="input">…</div></div>
+
+  <div class="sectitle">At a glance</div>
+  <div class="stats" id="stats"></div>
+
+  <div class="sectitle">Prose audit report</div>
+  <div class="report" id="report">…</div>
+  <details class="appendix" id="appendix-wrap" style="display:none">
+    <summary>Show structured appendix (raw triple list)</summary>
+    <pre id="appendix"></pre>
+  </details>
+
+  <div class="sectitle">Validated triples</div>
+  <div id="triples"></div>
+
+  <div class="sectitle">Track 1 — Knowledge-graph evidence (causal edges around the anchors)</div>
+  <div class="pathlist" id="paths"></div>
+
+  <div class="sectitle">Track 2 — Vector store</div>
+  <div class="t2" id="track2"></div>
+
+  <div class="sectitle">How to read this</div>
+  <div class="note" id="legend-note"></div>
+</div>
+
+<script>
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+const TYPEC={TechnicalFeature:"--tf",RiskMechanism:"--rm",EthicalImpact:"--ei",Mitigation:"--mi"};
+function tc(t){return getComputedStyle(document.documentElement).getPropertyValue(TYPEC[t]||"--mut").trim();}
+const INST_LABEL={INSTANTIATED:"AUDIT FINDING",POTENTIAL:"disclosure",NOT_TRIGGERED:"not triggered"};
+
+try{
+  if(typeof window.EXAMPLE_DATA==="undefined")
+    throw new Error("example_data.js failed to load. Run: python visualization/run_example.py");
+  const D=window.EXAMPLE_DATA;
+
+  // meta
+  document.getElementById("meta").innerHTML=
+    `<span class="tag">generated ${esc(D.generated||"")}</span>`+
+    `<span class="tag">analyze_text()</span>`+
+    `<span class="tag">public-safe (corpus sources/excerpts omitted)</span>`;
+
+  document.getElementById("input").textContent=D.input;
+
+  // stats
+  const tr=D.triples||[];
+  const chains=new Set(tr.map(t=>t.chain_id||"")).size;
+  const prov={graph_exact:0,graph_anchored:0,inferred:0};
+  const inst={INSTANTIATED:0,POTENTIAL:0,NOT_TRIGGERED:0};
+  let qok=0; const harms=new Set();
+  tr.forEach(t=>{const e=t.edge||{};
+    prov[e.provenance]=(prov[e.provenance]||0)+1;
+    inst[e.instantiation]=(inst[e.instantiation]||0)+1;
+    if(e.quote_verified)qok++;
+    if(t.tail&&t.tail.harm_family)harms.add(t.tail.harm_family);});
+  const stat=(n,l)=>`<div class="st"><div class="n">${n}</div><div class="l">${l}</div></div>`;
+  document.getElementById("stats").innerHTML=
+    stat(tr.length,"triples")+stat(chains,"causal chains")+
+    stat(`${qok}/${tr.length}`,"quotes verified")+
+    stat(`${prov.graph_exact}/${prov.graph_anchored}/${prov.inferred}`,"prov: exact/anch/inf")+
+    stat(`${inst.INSTANTIATED}/${inst.POTENTIAL}/${inst.NOT_TRIGGERED}`,"audit/disc/not-trig")+
+    stat(harms.size,"harm families");
+
+  // report: split prose from the appended structured appendix
+  let rep=D.report||"";
+  const marker=rep.indexOf("\n---\nAppendix");
+  let prose=rep, appendix="";
+  if(marker>=0){prose=rep.slice(0,marker); appendix=rep.slice(marker+5);}
+  document.getElementById("report").innerHTML=
+    prose.trim().split(/\n\s*\n/).map(p=>`<p>${esc(p.trim())}</p>`).join("");
+  if(appendix.trim()){document.getElementById("appendix").textContent=appendix.trim();
+    document.getElementById("appendix-wrap").style.display="block";}
+
+  // triples grouped by chain
+  const byChain={};
+  tr.forEach(t=>{(byChain[t.chain_id||"chain"]=byChain[t.chain_id||"chain"]||[]).push(t);});
+  const host=document.getElementById("triples");
+  Object.entries(byChain).forEach(([cid,steps],ci)=>{
+    let inner="";
+    steps.forEach(t=>{
+      const h=t.head||{},e=t.edge||{},ta=t.tail||{};
+      const ent=(o)=>`<span class="ent" style="color:${tc(o.type)};border-color:${tc(o.type)};background:${tc(o.type)}14">
+        <span class="ty">${esc(o.type||"")}</span>${esc(o.entity||"")}</span>`;
+      let badges=`<span class="b prov-${e.provenance}">${esc(e.provenance||"?")}</span>`+
+        `<span class="b ${e.quote_verified?"qok":"qno"}">quote ${e.quote_verified?"✓":"✗"}</span>`+
+        `<span class="b inst-${e.instantiation}">${INST_LABEL[e.instantiation]||e.instantiation}</span>`;
+      if(ta.harm_family)badges=`<span class="b harm">${esc(ta.harm_family)}</span>`+badges;
+      const cond=e.condition&&!["General","unknown"].includes(e.condition)
+        ?`<div class="meta-line"><span class="k">condition:</span> ${esc(e.condition)}</div>`:"";
+      const ev=e.evidence?`<div class="meta-line"><span class="k">evidence:</span> ${esc(e.evidence)}</div>`:"";
+      const q=e.input_quote?`<div class="quote">“${esc(e.input_quote)}”</div>`:"";
+      inner+=`<div class="triple">
+        <div class="flow">${ent(h)}
+          <span class="rel"><span class="rname">${esc(e.relation_type||"")}</span><span class="ar">▶</span></span>
+          ${ent(ta)}</div>
+        <div class="badges">${badges}</div>${cond}${ev}${q}</div>`;
+    });
+    host.innerHTML+=`<div class="chain"><div class="ch-hd">⛓ CHAIN ${ci+1} · ${steps.length} step${steps.length>1?"s":""}</div>${inner}</div>`;
+  });
+
+  // track 1 paths
+  document.getElementById("paths").innerHTML=
+    (D.graph_paths||[]).map(p=>`<div class="path">${esc(p)}</div>`).join("")||
+    `<div class="path">No causal edges found.</div>`;
+
+  // track 2 (no corpus content shown)
+  document.getElementById("track2").innerHTML=
+    `<b>${D.track2_count}</b> background literature chunks were retrieved from the FAISS vector store and `+
+    `fed to the auditor for term definitions only. Their raw text and source filenames are omitted here to `+
+    `keep the published page free of corpus data.`;
+
+  // legend
+  document.getElementById("legend-note").innerHTML=
+    `<b>provenance</b> — how the triple matches the retrieved graph: `+
+    `<span style="color:var(--ok)">graph_exact</span> (head+relation+tail all match a real edge), `+
+    `<span style="color:var(--warn)">graph_anchored</span> (risk→impact matches, head re-worded), `+
+    `<span style="color:var(--bad)">inferred</span> (model-reasoned). &nbsp;|&nbsp; `+
+    `<b>quote</b> — whether the cited sentence is verbatim in the input. &nbsp;|&nbsp; `+
+    `<b>instantiation</b> — <span style="color:var(--bad)">AUDIT FINDING</span> = this paper's own method triggers the risk; `+
+    `<span style="color:var(--warn)">disclosure</span> = category-level risk the paper doesn't trigger; `+
+    `not triggered = paper neutralizes it. In this run the strict gate kept every pathway at the `+
+    `disclosure level — it found no verbatim span proving the condition is actually performed, so it `+
+    `declined to assert an audit finding (verify-don't-trust).`;
+
+}catch(err){const e=document.getElementById("err");e.style.display="block";
+  e.innerHTML="<b>Could not render the example.</b><br>"+esc(err.message||String(err));console.error(err);}
+</script>
+</body>
+</html>

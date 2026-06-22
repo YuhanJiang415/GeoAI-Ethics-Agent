@@ -21,8 +21,7 @@
   .stats{display:flex;gap:10px;flex-wrap:wrap;margin:26px 0 6px}
   .s{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 15px}
   .s .n{font-size:20px;font-weight:700}.s .l{font-size:11px;color:var(--mut)}
-  .cards{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:36px}
-  @media(max-width:720px){.cards{grid-template-columns:1fr}}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(258px,1fr));gap:18px;margin-top:36px}
   .c{display:block;background:var(--panel);border:1px solid var(--line);border-radius:16px;
     padding:24px;text-decoration:none;color:inherit;transition:transform .14s,border-color .14s,box-shadow .14s;position:relative;overflow:hidden}
   .c:hover{transform:translateY(-4px);border-color:var(--acc);box-shadow:0 16px 40px rgba(30,40,60,.15)}
@@ -33,6 +32,7 @@
   .c::after{content:"";position:absolute;left:0;top:0;height:100%;width:4px}
   .c.wf::after{background:var(--run)}
   .c.kg::after{background:var(--t1)}
+  .c.ex::after{background:var(--t2)}
   .foot{margin-top:40px;font-size:12px;color:var(--mut);line-height:1.7}
   .foot code{font-family:ui-monospace,Menlo,monospace;background:var(--panel);
     border:1px solid var(--line);border-radius:5px;padding:1px 6px}
@@ -66,8 +66,15 @@
       <div class="ico">🕸️</div>
       <h2>Knowledge graph explorer</h2>
       <p>The built causal graph, fully interactive: drag nodes, search, filter by type,
-        click any node or edge to inspect its role, harm family, conditions and source papers.</p>
+        click any node or edge to inspect its role, type, harm family and connections.</p>
       <div class="go">Open graph →</div>
+    </a>
+    <a class="c ex" href="example.html">
+      <div class="ico">🧪</div>
+      <h2>Example audit run</h2>
+      <p>A real run of the agent on one GeoAI system description — the validated causal triples
+        with provenance / quote / audit-vs-disclosure tags, plus the prose audit it writes.</p>
+      <div class="go">See the result →</div>
     </a>
   </div>
 
