@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>GeoAI Ethics Auditor · Project Workflow</title>
+<style>
+  :root{
+    --bg:#f6f8fb; --panel:#ffffff; --panel2:#eef1f6; --line:#dfe3ea;
+    --ink:#1f2733; --mut:#6b7480; --acc:#2563eb;
+    --tf:#16a34a; --rm:#d97706; --ei:#dc2626; --mi:#9333ea;
+    --t1:#2563eb; --t2:#0d9488; --build:#ea7a23; --run:#7c3aed;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  a{color:var(--acc);text-decoration:none}
+  .wrap{max-width:1180px;margin:0 auto;padding:34px 28px 80px}
+  header h1{font-size:26px;margin:0 0 6px;letter-spacing:.2px}
+  header p{color:var(--mut);margin:0;font-size:14px;line-height:1.6;max-width:780px}
+  .nav{margin:18px 0 6px;font-size:13px;color:var(--mut)}
+  .nav a{margin-right:16px}
+  .topstats{display:flex;gap:12px;flex-wrap:wrap;margin:22px 0 8px}
+  .topstat{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:10px 16px;min-width:120px}
+  .topstat .n{font-size:22px;font-weight:700}
+  .topstat .l{font-size:11px;color:var(--mut);margin-top:2px}
+
+  .phase{margin-top:40px}
+  .phase-hd{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+  .phase-hd .num{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;
+    font-weight:700;font-size:14px;color:#ffffff}
+  .phase-hd h2{font-size:17px;margin:0}
+  .phase-hd .tag{font-size:11px;color:var(--mut);border:1px solid var(--line);
+    border-radius:20px;padding:3px 10px;margin-left:6px}
+
+  .row{display:flex;align-items:stretch;gap:0;flex-wrap:nowrap;overflow-x:auto;padding-bottom:6px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:13px 15px;min-width:180px;max-width:230px;cursor:pointer;
+    transition:transform .12s,border-color .12s,box-shadow .12s;position:relative;flex:0 0 auto}
+  .card:hover{transform:translateY(-3px);border-color:var(--acc);
+    box-shadow:0 10px 26px rgba(30,40,60,.13)}
+  .card .ct{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--mut)}
+  .card .tt{font-size:14px;font-weight:600;margin:5px 0 6px;line-height:1.3}
+  .card .ds{font-size:11.5px;color:var(--mut);line-height:1.5}
+  .card .file{font-size:10.5px;color:var(--acc);margin-top:8px;
+    font-family:ui-monospace,Menlo,monospace;word-break:break-all}
+  .card .stripe{position:absolute;left:0;top:12px;bottom:12px;width:3px;border-radius:3px}
+  .conn{flex:0 0 auto;align-self:center;width:34px;height:2px;background:var(--line);position:relative}
+  .conn::after{content:"";position:absolute;right:-1px;top:-3px;border:4px solid transparent;
+    border-left-color:var(--line)}
+
+  .lane{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:0 0 6px}
+  .lane .lane-hd{font-size:12px;font-weight:700;letter-spacing:.4px;
+    padding:7px 12px;border-radius:8px;margin-bottom:10px;display:inline-flex;gap:8px;align-items:center}
+  .lane .col{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:14px}
+  .lane .col .seq{display:flex;flex-direction:column;gap:10px}
+  .miniconn{height:14px;position:relative}
+  .miniconn::after{content:"↓";position:absolute;left:50%;transform:translateX(-50%);
+    color:var(--mut);font-size:13px}
+  .merge{display:flex;align-items:center;justify-content:center;gap:10px;margin:16px 0 6px;
+    color:var(--mut);font-size:12px}
+  .merge .pill{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:6px 14px}
+
+  .gates{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+  .gate{flex:1;min-width:150px;background:var(--panel2);border:1px solid var(--line);
+    border-radius:10px;padding:11px 13px;cursor:pointer;transition:border-color .12s}
+  .gate:hover{border-color:var(--acc)}
+  .gate .g-n{font-size:12px;font-weight:700}
+  .gate .g-d{font-size:11px;color:var(--mut);margin-top:4px;line-height:1.45}
+
+  /* detail drawer */
+  #drawer{position:fixed;top:0;right:0;height:100%;width:430px;max-width:92vw;
+    background:var(--panel);border-left:1px solid var(--line);transform:translateX(105%);
+    transition:transform .22s ease;z-index:30;overflow-y:auto;
+    box-shadow:-18px 0 50px rgba(30,40,60,.18)}
+  #drawer.show{transform:translateX(0)}
+  #drawer .dh{padding:20px 22px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;
+    background:var(--panel);z-index:2}
+  #drawer .dh .ct{font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:var(--mut)}
+  #drawer .dh h3{margin:6px 0 0;font-size:19px;line-height:1.3}
+  #drawer .x{position:absolute;top:16px;right:18px;font-size:20px;color:var(--mut);cursor:pointer}
+  #drawer .x:hover{color:var(--ink)}
+  #drawer .db{padding:18px 22px 60px;font-size:13.5px;line-height:1.6}
+  #drawer .db h4{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--mut);
+    margin:20px 0 8px}
+  #drawer .db p{margin:0 0 10px}
+  #drawer code,.mono{font-family:ui-monospace,Menlo,monospace;font-size:12px;
+    background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
+  #drawer ul{margin:0 0 10px;padding-left:18px}
+  #drawer li{margin:4px 0}
+  .io{display:flex;gap:8px;flex-wrap:wrap}
+  .io .chip{background:var(--panel2);border:1px solid var(--line);border-radius:6px;
+    padding:3px 9px;font-size:11px;font-family:ui-monospace,Menlo,monospace}
+  #scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;
+    transition:opacity .22s;z-index:20}
+  #scrim.show{opacity:1;pointer-events:auto}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:26px;font-size:11.5px;color:var(--mut)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>GeoAI Ethics Auditor — Project Workflow</h1>
+    <p>A dual-track ethics-auditing system. An <b style="color:var(--build)">offline build</b> distills
+       28 GeoAI-ethics papers into a causal knowledge graph and a vector store; an
+       <b style="color:var(--run)">online agent</b> audits any new paper against both, emitting
+       machine-gradable causal triples and a prose report. Click any block for details.</p>
+    <div class="nav">
+      <a href="index.html">← Overview</a>
+      <a href="knowledge_graph.html">Knowledge graph explorer →</a>
+    </div>
+    <div class="topstats">
+      <div class="topstat"><div class="n">28</div><div class="l">source papers</div></div>
+      <div class="topstat"><div class="n">301</div><div class="l">graph nodes</div></div>
+      <div class="topstat"><div class="n">207</div><div class="l">causal edges</div></div>
+      <div class="topstat"><div class="n">1107</div><div class="l">FAISS chunks</div></div>
+      <div class="topstat"><div class="n">3</div><div class="l">verification gates</div></div>
+    </div>
+  </header>
+
+  <!-- PHASE 1 -->
+  <section class="phase">
+    <div class="phase-hd">
+      <div class="num" style="background:var(--build)">1</div>
+      <h2>Offline build</h2><span class="tag">one-time · run manually</span>
+    </div>
+    <div class="row" id="row-build"></div>
+    <div class="legend">
+      <span><i style="background:var(--build)"></i>build step</span>
+      <span><i style="background:var(--t1)"></i>Track-1 data (graph)</span>
+      <span><i style="background:var(--t2)"></i>Track-2 data (vectors)</span>
+    </div>
+  </section>
+
+  <!-- PHASE 2 -->
+  <section class="phase">
+    <div class="phase-hd">
+      <div class="num" style="background:var(--run)">2</div>
+      <h2>Online dual-track agent</h2>
+      <span class="tag">DualTrackGeoAIAgent · graph_agent_answer_v2.py</span>
+    </div>
+
+    <div class="row" id="row-input"></div>
+
+    <div class="lane" style="margin-top:20px">
+      <div>
+        <div class="lane-hd" style="background:rgba(88,166,255,.13);color:var(--t1);border:1px solid var(--t1)">
+          ◆ Track 1 — Knowledge Graph (causal logic)</div>
+        <div class="col"><div class="seq" id="seq-t1"></div></div>
+      </div>
+      <div>
+        <div class="lane-hd" style="background:rgba(45,212,191,.13);color:var(--t2);border:1px solid var(--t2)">
+          ◆ Track 2 — Vector Store (definitions)</div>
+        <div class="col"><div class="seq" id="seq-t2"></div></div>
+      </div>
+    </div>
+
+    <div class="merge"><div class="pill">▼ both tracks feed one auditor prompt ▼</div></div>
+
+    <div class="row" id="row-emit"></div>
+
+    <div class="phase-hd" style="margin:22px 0 10px">
+      <h2 style="font-size:14px;color:var(--mut)">Three "verify-don't-trust" gates applied to every emitted triple</h2>
+    </div>
+    <div class="gates" id="gates"></div>
+
+    <div class="row" id="row-narrate" style="margin-top:20px"></div>
+  </section>
+
+  <!-- PHASE 3 -->
+  <section class="phase">
+    <div class="phase-hd">
+      <div class="num" style="background:var(--acc)">3</div>
+      <h2>Entry points</h2><span class="tag">what you run</span>
+    </div>
+    <div class="row" id="row-entry"></div>
+  </section>
+</div>
+
+<div id="scrim" onclick="closeDrawer()"></div>
+<aside id="drawer">
+  <div class="dh"><span class="x" onclick="closeDrawer()">✕</span>
+    <div class="ct" id="dr-ct">·</div><h3 id="dr-title">–</h3></div>
+  <div class="db" id="dr-body"></div>
+</aside>
+
+<script>
+/* ---------- content model ---------- */
+const STAGES = {
+  corpus:{ct:"input",t:"GeoAI-ethics corpus",file:"geoai_ethics_data/ (28 PDFs)",color:"var(--build)",
+    ds:"Shared source for BOTH tracks.",
+    body:`<p>28 GeoAI-ethics research papers in PDF. This is the only raw input to the offline build — both the knowledge graph and the vector store are derived from it.</p>
+      <h4>Feeds</h4><ul><li>Triple extraction → the graph (Track 1)</li><li>Chunk + embed → FAISS (Track 2)</li></ul>
+      <h4>Note</h4><p>PDF is fine here: Track 2 only needs raw text for semantic retrieval. Section-aware XML matters only for the <i>audited</i> paper, not this background corpus.</p>`},
+  extract:{ct:"build · LLM",t:"extract_all()",file:"triple_extractor_test.py",color:"var(--build)",
+    ds:"gemini-3-flash reads each PDF, extracts ethics causal chains.",
+    body:`<p>Per paper, <code>gemini-3-flash-preview</code> runs a strict extraction prompt and writes <code>triples_bm_v2.json</code>.</p>
+      <h4>Gates inside the prompt</h4><ul>
+      <li><b>STEP-0 relevance gate</b> — non-ethics papers return <code>{"chains":[]}</code> and stop.</li>
+      <li><b>Closed ontology</b> — 4 node types, 4 relations, 5 harm families only.</li>
+      <li><b>Explicit-assertion gate</b> — extract only if the text itself states a harm, never inferred.</li></ul>
+      <h4>Outputs</h4><div class="io"><span class="chip">triples_bm_v2.json</span><span class="chip">chains_bm_v2.json</span><span class="chip">extraction_summary_bm_v2.csv</span></div>`},
+  build:{ct:"build · graph",t:"build_graph_from_json()",file:"triple_extractor_test.py",color:"var(--t1)",
+    ds:"Synonym fusion + topology gate → networkx DiGraph.",
+    body:`<p>Turns the raw triples into the causal graph the online agent reads.</p>
+      <h4>Steps</h4><ul>
+      <li><b>keyword_alignment()</b> — per-type Agglomerative clustering over Gemini embeddings (cosine, threshold 0.07) canonicalizes synonymous entities.</li>
+      <li><b>validate_triple()</b> — topology gate drops any edge that violates the closed ontology (TF→RM→EI etc).</li>
+      <li>Repeated edges accumulate <code>weight</code>, <code>sources</code>, <code>conditions</code>, <code>evidence</code>.</li></ul>
+      <h4>Output → Track-1 data</h4><div class="io"><span class="chip">geoai_knowledge_bm_v2.graphml</span></div>
+      <p style="margin-top:8px">301 nodes · 207 edges (PROMOTES 164 / INHIBITS 43).</p>`},
+  vstore:{ct:"build · vectors",t:"_build_vector_store()",file:"graph_agent_answer_v2.py",color:"var(--t2)",
+    ds:"Chunk PDFs + embed → FAISS index (lazy, auto-rebuilds).",
+    body:`<p>Built lazily by the agent's <code>__init__</code> when the index is missing or older than the graph.</p>
+      <h4>Steps</h4><ul>
+      <li><code>PyPDFLoader</code> loads each PDF; References/Bibliography stripped by regex.</li>
+      <li><code>RecursiveCharacterTextSplitter</code> — chunk 2000 / overlap 400.</li>
+      <li>Embed with <code>gemini-embedding-001</code> (3072-dim), 500/batch with 15 s sleeps for rate limits.</li></ul>
+      <h4>Output → Track-2 data</h4><div class="io"><span class="chip">faiss_index_bm_v2/</span><span class="chip">node_embeddings_cache_bm_v2.npy</span></div>
+      <p style="margin-top:8px">1107 chunks indexed.</p>`},
+  insight:{ct:"build · inspect",t:"insight.py",file:"insight.py",color:"var(--build)",
+    ds:"Stats + PyVis HTML preview of the graph.",
+    body:`<p>Optional. Reads the graphml and renders <code>graph_preview_bm_v2.html</code> plus type/degree statistics.</p>
+      <h4>Tip</h4><p>The interactive explorer in this folder (<a href="knowledge_graph.html">knowledge_graph.html</a>) is a richer version of this.</p>`},
+
+  input:{ct:"online · routing",t:"Input routing",file:"analyze_xml / analyze_pdf / analyze_text",color:"var(--run)",
+    ds:"How the paper-to-audit becomes text for the two tracks.",
+    body:`<p>Three entry methods converge on <code>analyze_text()</code>, differing only in preprocessing:</p>
+      <h4>analyze_xml <span style="color:var(--mut)">(recommended)</span></h4>
+      <p><code>parse_elsevier_xml</code> routes text by section role: <b>CONTRIBUTION</b> (abstract+methods+results+concl.) drives the audit; <b>CONTEXT</b> (intro/related-work) only defines terms; References dropped. Prevents auditing surveyed risks as the paper's own.</p>
+      <h4>analyze_pdf</h4><p>No reliable section tags → whole body (minus References) is condensed and audited.</p>
+      <h4>analyze_text</h4><p>Pasted text used directly.</p>
+      <p>XML/PDF first pass through <code>_condense()</code> (gemini-3-flash) into a 5-section profile.</p>`},
+  t1_kw:{ct:"track 1",t:"Keyword extract + expand",file:"extract_keywords_from_text · expand_keywords",color:"var(--t1)",
+    ds:"LLM pulls 3–5 concepts, then adds synonyms for recall.",
+    body:`<p><code>gemini-3-flash</code> extracts the key technical concepts, then expands each with 1–2 synonyms to improve graph recall.</p>`},
+  t1_anchor:{ct:"track 1",t:"Hybrid anchor retrieval",file:"find_top_k_nodes",color:"var(--t1)",
+    ds:"BM25 + dense, fused by Reciprocal Rank Fusion.",
+    body:`<p>For each expanded keyword, find anchor nodes in the graph:</p>
+      <ul><li><b>BM25</b> sparse score over node names.</li>
+      <li><b>Dense</b> cosine over cached node embeddings.</li>
+      <li>Fused with <b>RRF</b> (k=60); kept if dense ≥ 0.40 or any sparse hit.</li></ul>
+      <p>Anchors capped at <code>MAX_ANCHORS = 10</code>.</p>`},
+  t1_ego:{ct:"track 1",t:"Ego-graph harvest",file:"get_ego_graph_context",color:"var(--t1)",
+    ds:"radius-2 subgraph around anchors → typed causal edges.",
+    body:`<p><code>nx.ego_graph(radius=2, undirected=True)</code> around each anchor collects nearby causal edges, sorted by edge <code>weight</code>.</p>
+      <h4>Produces</h4><p>A list of <b>typed, directed</b> structured edges (TF→RM→EI…) — the causal skeleton the auditor must obey, and the reference for provenance checking.</p>`},
+  t2_search:{ct:"track 2",t:"Semantic retrieval",file:"vectorstore.similarity_search(k=3)",color:"var(--t2)",
+    ds:"Top-3 background chunks from FAISS.",
+    body:`<p>The audited text retrieves its 3 most similar chunks from <code>faiss_index_bm_v2</code>.</p>
+      <h4>Role</h4><p>Provided to the auditor as <i>"definitions and context"</i> only — explicitly NOT a source of claims. On XML audits the paper's own background sections are appended here too, for term-grounding.</p>`},
+  emit:{ct:"online · LLM",t:"_emit_audit_triples()",file:"graph_agent_answer_v2.py · gemini-3.1-pro",color:"var(--run)",
+    ds:"Auditor prompt → closed-ontology causal chains (JSON).",
+    body:`<p>The slow reasoning model (<code>gemini-3.1-pro-preview</code>) receives Track-1 edges + Track-2 chunks + the audited text and emits causal chains as strict JSON, parsed by <code>robust_parse</code>.</p>
+      <p>Every emitted triple then runs the three gates →</p>`},
+  narrate:{ct:"online · LLM",t:"_narrate_audit()",file:"graph_agent_answer_v2.py",color:"var(--run)",
+    ds:"Validated triples → prose audit + structured appendix.",
+    body:`<p>A second reasoning pass turns ONLY the validated triples into a 3-paragraph prose audit, qualified by each triple's confidence and instantiation tag, with the structured triple list appended.</p>
+      <h4>Returns</h4><div class="io"><span class="chip">report (prose)</span><span class="chip">audit_triples</span><span class="chip">graph_paths</span><span class="chip">docs</span></div>`},
+
+  app:{ct:"entry · UI",t:"app.py",file:"streamlit run app.py",color:"var(--acc)",
+    ds:"Streamlit auditor with XML / Text / PDF tabs.",
+    body:`<p>Interactive auditor. Three tabs (XML recommended, Text, PDF). Renders the validated triples (with provenance colour + quote✓/✗), the prose report, and both tracks' evidence.</p>
+      <h4>Run</h4><p><code>cd agent &amp;&amp; streamlit run app.py</code></p>`},
+  bench:{ct:"entry · eval",t:"benchmark_run.py",file:"python benchmark_run.py ./heldout_xml out.xlsx",color:"var(--acc)",
+    ds:"Batch-audit held-out XML → graded Excel workbook.",
+    body:`<p>Runs every XML in <code>heldout_xml/</code> through <code>analyze_xml</code>, computes <code>C_chain</code> (structural recall, reference-free), and writes a two-sheet grading workbook.</p>
+      <h4>Outputs</h4><div class="io"><span class="chip">agent_benchmark.xlsx</span><span class="chip">..._raw.json</span></div>
+      <h4>Scoring</h4><p>Two layers: F/G/O/L precision (manual on TripleDetail) + C_chain structural recall (auto). <code>S_graph = 0.75·S_triple + 0.25·C_chain</code>.</p>`},
+};
+
+const GATES = {
+  topology:{g:"① Topology",d:"validate_triple — node types, relation & direction must fit the closed ontology, else the triple is dropped.",ct:"gate · structural",t:"Topology gate",
+    body:`<p><code>validate_triple()</code> (shared with the extractor) rejects any triple whose (head-type, relation, tail-type) is not a legal ontology transition. Guarantees the agent's output is gradable by the same rubric as the graph.</p>`},
+  prov:{g:"② Provenance",d:"classify_provenance — match the triple against the edges actually retrieved: graph_exact / graph_anchored / inferred. The model's self-report is ignored.",ct:"gate · grounding",t:"Provenance gate",
+    body:`<p>Ignores any source the model claims. Fuzzy-matches the emitted triple against Track-1 edges:</p>
+      <ul><li><b>graph_exact</b> — head, relation, tail all match a retrieved edge.</li>
+      <li><b>graph_anchored</b> — the risk→impact side matches; head re-worded to the paper's vocabulary.</li>
+      <li><b>inferred</b> — neither endpoint matches; the model reasoned it.</li></ul>`},
+  quote:{g:"③ Quote + Instantiation",d:"verify_quote checks the cited sentence really occurs; the instantiation gate decides AUDIT vs DISCLOSURE.",ct:"gate · evidence",t:"Quote & instantiation gates",
+    body:`<p><b>verify_quote</b> — the model's verbatim <code>input_quote</code> must actually occur (fuzzy, whitespace/case tolerant) in the paper, else flagged.</p>
+      <h4>Instantiation gate</h4><p>A batched <code>gemini-3.1-pro</code> call tests each triple's <code>condition</code> against the paper's CONTRIBUTION:</p>
+      <ul><li><b>INSTANTIATED</b> — the paper's own method triggers the risk = real <b>audit finding</b> (must cite a verifiable span).</li>
+      <li><b>POTENTIAL</b> — category-level risk this paper doesn't trigger = <b>disclosure</b>.</li>
+      <li><b>NOT_TRIGGERED</b> — the paper neutralizes it.</li></ul>`},
+};
+
+/* ---------- render ---------- */
+function card(key){
+  const s=STAGES[key];
+  return `<div class="card" onclick="openDrawer('stage','${key}')">
+    <span class="stripe" style="background:${s.color}"></span>
+    <div class="ct">${s.ct}</div><div class="tt">${s.t}</div>
+    <div class="ds">${s.ds}</div><div class="file">${s.file}</div></div>`;
+}
+function conn(){return `<div class="conn"></div>`;}
+function fillRow(id,keys){document.getElementById(id).innerHTML=keys.map(card).join(conn());}
+function fillSeq(id,keys){
+  document.getElementById(id).innerHTML=keys.map((k,i)=>
+    (i?`<div class="miniconn"></div>`:"")+card(k)).join("");
+}
+
+fillRow("row-build",["corpus","extract","build","vstore","insight"]);
+fillRow("row-input",["input"]);
+fillSeq("seq-t1",["t1_kw","t1_anchor","t1_ego"]);
+fillSeq("seq-t2",["t2_search"]);
+fillRow("row-emit",["emit"]);
+fillRow("row-narrate",["narrate"]);
+fillRow("row-entry",["app","bench"]);
+
+document.getElementById("gates").innerHTML=Object.keys(GATES).map(k=>{
+  const g=GATES[k];
+  return `<div class="gate" onclick="openDrawer('gate','${k}')">
+    <div class="g-n">${g.g}</div><div class="g-d">${g.d}</div></div>`;
+}).join("");
+
+/* ---------- drawer ---------- */
+function openDrawer(kind,key){
+  const o = kind==="gate"?GATES[key]:STAGES[key];
+  document.getElementById("dr-ct").textContent=o.ct||(kind==="gate"?"gate":"stage");
+  document.getElementById("dr-title").textContent=o.t;
+  document.getElementById("dr-body").innerHTML=o.body;
+  document.getElementById("drawer").classList.add("show");
+  document.getElementById("scrim").classList.add("show");
+}
+function closeDrawer(){
+  document.getElementById("drawer").classList.remove("show");
+  document.getElementById("scrim").classList.remove("show");
+}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeDrawer();});
+</script>
+</body>
+</html>

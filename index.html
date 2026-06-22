@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>GeoAI Ethics Auditor · Visualizations</title>
+<style>
+  :root{--bg:#f6f8fb;--panel:#ffffff;--line:#dfe3ea;--ink:#1f2733;--mut:#6b7480;--acc:#2563eb;
+    --t1:#2563eb;--t2:#0d9488;--build:#ea7a23;--run:#7c3aed;}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:
+    radial-gradient(1200px 600px at 70% -10%,rgba(124,58,237,.08),transparent),
+    radial-gradient(900px 500px at 10% 110%,rgba(13,148,136,.07),transparent),var(--bg);
+    color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    min-height:100%}
+  .wrap{max-width:920px;margin:0 auto;padding:70px 28px}
+  .eyebrow{font-size:12px;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut)}
+  h1{font-size:34px;margin:10px 0 12px;letter-spacing:.2px}
+  .lede{color:var(--mut);font-size:15.5px;line-height:1.7;max-width:680px}
+  .lede b{color:var(--ink)}
+  .stats{display:flex;gap:10px;flex-wrap:wrap;margin:26px 0 6px}
+  .s{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 15px}
+  .s .n{font-size:20px;font-weight:700}.s .l{font-size:11px;color:var(--mut)}
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:36px}
+  @media(max-width:720px){.cards{grid-template-columns:1fr}}
+  .c{display:block;background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    padding:24px;text-decoration:none;color:inherit;transition:transform .14s,border-color .14s,box-shadow .14s;position:relative;overflow:hidden}
+  .c:hover{transform:translateY(-4px);border-color:var(--acc);box-shadow:0 16px 40px rgba(30,40,60,.15)}
+  .c .ico{font-size:26px}
+  .c h2{font-size:18px;margin:14px 0 8px}
+  .c p{font-size:13px;color:var(--mut);line-height:1.6;margin:0}
+  .c .go{margin-top:16px;font-size:13px;color:var(--acc);font-weight:600}
+  .c::after{content:"";position:absolute;left:0;top:0;height:100%;width:4px}
+  .c.wf::after{background:var(--run)}
+  .c.kg::after{background:var(--t1)}
+  .foot{margin-top:40px;font-size:12px;color:var(--mut);line-height:1.7}
+  .foot code{font-family:ui-monospace,Menlo,monospace;background:var(--panel);
+    border:1px solid var(--line);border-radius:5px;padding:1px 6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Master's thesis · GeoAI ethics auditing</div>
+  <h1>Dual-Track GeoAI Ethics Auditor</h1>
+  <p class="lede">An <b>offline build</b> distills GeoAI-ethics papers into a causal
+    knowledge graph (Track 1) and a vector store (Track 2). An <b>online agent</b> audits
+    any new paper against both and emits machine-gradable causal triples plus a prose report.
+    Two visualizations below.</p>
+
+  <div class="stats">
+    <div class="s"><div class="n">28</div><div class="l">papers</div></div>
+    <div class="s"><div class="n">301</div><div class="l">nodes</div></div>
+    <div class="s"><div class="n">207</div><div class="l">edges</div></div>
+    <div class="s"><div class="n">1107</div><div class="l">chunks</div></div>
+  </div>
+
+  <div class="cards">
+    <a class="c wf" href="workflow.html">
+      <div class="ico">🛠️</div>
+      <h2>Project workflow</h2>
+      <p>The whole pipeline as an interactive flow — offline build, the online dual-track
+        agent, the three verification gates, and the two entry points. Click any block for details.</p>
+      <div class="go">Open workflow →</div>
+    </a>
+    <a class="c kg" href="knowledge_graph.html">
+      <div class="ico">🕸️</div>
+      <h2>Knowledge graph explorer</h2>
+      <p>The built causal graph, fully interactive: drag nodes, search, filter by type,
+        click any node or edge to inspect its role, harm family, conditions and source papers.</p>
+      <div class="go">Open graph →</div>
+    </a>
+  </div>
+
+  <div class="foot">
+    Static files — just open them in a browser. The graph view loads
+    <code>graph_data.js</code>; regenerate it after rebuilding the graph with
+    <code>python visualization/export_graph_data.py</code>.
+  </div>
+</div>
+</body>
+</html>

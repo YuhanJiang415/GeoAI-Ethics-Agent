@@ -1,0 +1,100 @@
+"""
+export_graph_data.py
+====================
+Reads the built knowledge graph (../geoai_knowledge_bm_v2.graphml) and writes
+visualization/graph_data.js as a single `window.GRAPH_DATA = {...}` blob that
+knowledge_graph.html loads directly (no server / no fetch -> works from file://).
+
+Two modes:
+  (default) PUBLIC-SAFE  -> strips fields that are NOT needed to render the graph
+                            but would leak research data if published:
+                              edge.sources    (corpus paper filenames)
+                              edge.evidence   (LLM extraction justification text)
+                              edge.conditions (condition text)
+                            The graph still renders fully (nodes, edges, types,
+                            harm families). This is what gets committed/published.
+  --full                 -> keeps every field. Use for LOCAL inspection only;
+                            do NOT commit the resulting file to a public repo.
+
+Re-run after rebuilding the graph (python triple_extractor_test.py).
+
+    python export_graph_data.py            # public-safe (publishable)
+    python export_graph_data.py --full     # full data (local only)
+"""
+import os
+import sys
+import json
+import networkx as nx
+from collections import Counter
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+GRAPH = os.path.join(HERE, "..", "geoai_knowledge_bm_v2.graphml")
+OUT = os.path.join(HERE, "graph_data.js")
+
+# fields dropped in public-safe mode (not used to render; would leak data)
+SENSITIVE_EDGE_FIELDS = ("sources", "evidence", "conditions")
+
+
+def _num(x, default=1):
+    try:
+        return float(x)
+    except (TypeError, ValueError):
+        return default
+
+
+def main(full=False):
+    if not os.path.exists(GRAPH):
+        raise SystemExit(f"Graph not found: {GRAPH} (run triple_extractor_test.py first)")
+    G = nx.read_graphml(GRAPH)
+
+    nodes = []
+    for n, d in G.nodes(data=True):
+        nodes.append({
+            "id": n,
+            "label": d.get("label", n),
+            "type": d.get("type", "Unknown"),
+            "harm_family": d.get("harm_family", "") or "",
+            "degree": int(G.degree(n)),
+            "indeg": int(G.in_degree(n)),
+            "outdeg": int(G.out_degree(n)),
+        })
+
+    edges = []
+    for u, v, d in G.edges(data=True):
+        e = {
+            "from": u,
+            "to": v,
+            "relation": d.get("relation", "RELATED_TO"),
+            "weight": _num(d.get("weight", 1)),
+        }
+        if full:
+            e["sources"] = d.get("sources", "")
+            e["conditions"] = d.get("conditions", "")
+            e["evidence"] = d.get("evidence", "")
+        edges.append(e)
+
+    stats = {
+        "nodes": G.number_of_nodes(),
+        "edges": G.number_of_edges(),
+        "by_type": dict(Counter(nd["type"] for nd in nodes)),
+        "by_relation": dict(Counter(e["relation"] for e in edges)),
+        "by_harm": dict(Counter(nd["harm_family"] for nd in nodes if nd["harm_family"])),
+        "top_degree": sorted(
+            [{"label": nd["label"], "type": nd["type"], "degree": nd["degree"]} for nd in nodes],
+            key=lambda x: x["degree"], reverse=True)[:12],
+    }
+
+    data = {"stats": stats, "nodes": nodes, "edges": edges, "public_safe": not full}
+    with open(OUT, "w", encoding="utf-8") as f:
+        f.write("window.GRAPH_DATA = ")
+        json.dump(data, f, ensure_ascii=False, indent=1)
+        f.write(";\n")
+
+    mode = "FULL (local only — do not publish)" if full else "PUBLIC-SAFE (publishable)"
+    print(json.dumps(stats, indent=2, ensure_ascii=False))
+    print(f"\nMode: {mode}")
+    print(f"Wrote {OUT}")
+
+
+if __name__ == "__main__":
+    main(full=("--full" in sys.argv))
