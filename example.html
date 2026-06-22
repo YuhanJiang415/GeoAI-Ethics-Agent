@@ -33,6 +33,14 @@
   .inputbox{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--acc);
     border-radius:10px;padding:16px 18px;font-size:14px;line-height:1.65}
   .inputbox .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--mut);margin-bottom:8px}
+  .src-title{font-size:15.5px;font-weight:600;line-height:1.42;color:var(--ink)}
+  .src-title a{color:var(--ink)} .src-title a:hover{color:var(--acc)}
+  .src-chips{margin:11px 0 13px;display:flex;gap:8px;flex-wrap:wrap}
+  .src-chips .chip{font-size:11.5px;border:1px solid var(--line);border-radius:6px;padding:3px 10px;background:var(--panel2);color:var(--ink)}
+  .src-chips a.chip.doi{border-color:var(--acc);color:var(--acc);text-decoration:none}
+  .src-chips a.chip.doi:hover{background:#eef4ff}
+  .src-abs{font-size:12.5px;color:#475569;line-height:1.62}
+  .src-abs .lbl2{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--mut);margin-bottom:4px}
 
   .stats{display:flex;gap:10px;flex-wrap:wrap;margin:4px 0}
   .st{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 15px;min-width:96px}
@@ -90,18 +98,19 @@
   <div class="nav"><a href="index.html">← Overview</a><a href="workflow.html">Workflow</a><a href="knowledge_graph.html">Knowledge graph</a></div>
   <header>
     <h1>Example audit run</h1>
-    <div class="sub">A real run of the <b>DualTrackGeoAIAgent</b> on one synthetic GeoAI system
-      description. This shows the agent's actual output: closed-ontology causal triples, each tagged with
-      verified <b>provenance</b>, a verified verbatim <b>quote</b>, and an <b>instantiation</b> verdict
+    <div class="sub">A real run of the <b>DualTrackGeoAIAgent</b> on one real, held-out
+      remote-sensing paper (audited via the section-aware <b>analyze_xml</b> path). This shows the
+      agent's actual output: closed-ontology causal triples, each tagged with verified
+      <b>provenance</b>, a verified verbatim <b>quote</b>, and an <b>instantiation</b> verdict
       (audit-finding vs disclosure), plus the prose audit it writes from them.</div>
     <div class="meta" id="meta"></div>
   </header>
 
   <div id="err"></div>
 
-  <div class="sectitle">Input audited</div>
-  <div class="inputbox"><div class="lbl">System description (synthetic, not corpus text)</div>
-    <div id="input">…</div></div>
+  <div class="sectitle">Source paper audited</div>
+  <div class="inputbox"><div class="lbl">Held-out paper — the agent audited its full text (section-aware)</div>
+    <div id="source">…</div></div>
 
   <div class="sectitle">At a glance</div>
   <div class="stats" id="stats"></div>
@@ -140,10 +149,17 @@ try{
   // meta
   document.getElementById("meta").innerHTML=
     `<span class="tag">generated ${esc(D.generated||"")}</span>`+
-    `<span class="tag">analyze_text()</span>`+
+    `<span class="tag">analyze_xml() · section-aware</span>`+
     `<span class="tag">public-safe (corpus sources/excerpts omitted)</span>`;
 
-  document.getElementById("input").textContent=D.input;
+  // source paper citation
+  const s=D.source||{};
+  const doiLink=s.doi_url?`<a class="chip doi" href="${esc(s.doi_url)}" target="_blank" rel="noopener">DOI ${esc(s.doi)}</a>`:"";
+  const jr=s.journal?`<span class="chip">${esc(s.journal)}</span>`:"";
+  const abs=s.abstract?`<div class="src-abs"><div class="lbl2">Abstract (from the paper)</div>${esc(s.abstract)}${s.abstract.length>=1200?"…":""}</div>`:"";
+  document.getElementById("source").innerHTML=
+    `<div class="src-title">`+(s.doi_url?`<a href="${esc(s.doi_url)}" target="_blank" rel="noopener">${esc(s.title||"(untitled)")}</a>`:esc(s.title||"(untitled)"))+`</div>`+
+    `<div class="src-chips">${doiLink}${jr}</div>${abs}`;
 
   // stats
   const tr=D.triples||[];

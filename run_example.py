@@ -1,22 +1,22 @@
 """
 run_example.py
 ==============
-Runs the DualTrackGeoAIAgent on ONE example system description and dumps a
-PUBLIC-SAFE result to visualization/example_data.js (window.EXAMPLE_DATA),
+Runs the DualTrackGeoAIAgent on ONE real held-out paper (section-aware XML) and
+dumps a PUBLIC-SAFE result to visualization/example_data.js (window.EXAMPLE_DATA),
 which example.html renders.
 
 Public-safe: the audit output (triples, prose report, provenance/quote/
-instantiation tags, Track-1 causal paths — all of which are the agent's
-reasoning about the INPUT we provide) is kept. Corpus-derived leakables are
-dropped: per-edge graph_source_docs (corpus filenames) and Track-2 raw
-document excerpts/sources.
+instantiation tags, Track-1 causal paths) plus the audited paper's own
+title/DOI/abstract are kept. Corpus-derived leakables are dropped: per-edge
+graph_source_docs (training-corpus filenames) and Track-2 raw excerpts/sources.
 
-Run from anywhere; it chdirs to the project root so the agent's relative
-paths (./geoai_knowledge_bm_v2.graphml etc.) resolve.
+Run from anywhere; it chdirs to the project root so the agent's relative paths
+(./geoai_knowledge_bm_v2.graphml etc.) resolve.
 
     python visualization/run_example.py
 """
 import os
+import re
 import sys
 import json
 import datetime
@@ -28,28 +28,44 @@ OUT = os.path.join(HERE, "example_data.js")
 os.chdir(ROOT)
 sys.path.insert(0, ROOT)
 
-from graph_agent_answer_v2 import DualTrackGeoAIAgent  # noqa: E402
+from graph_agent_answer_v2 import DualTrackGeoAIAgent          # noqa: E402
+from xml_parser import parse_elsevier_xml                       # noqa: E402
 
-# A synthetic GeoAI system description (NOT corpus text) chosen to exercise
-# the privacy / re-identification harm chains the graph is rich in.
-EXAMPLE_INPUT = (
-    "We build a GeoAI system that infers each user's home and workplace from anonymized "
-    "mobile-phone GPS trajectories. Our method re-identifies individuals by linking the "
-    "inferred home locations against public voter rolls, and we then fuse the de-anonymized "
-    "traces with census demographics to predict household socioeconomic status at "
-    "building-block resolution. We release these per-household socioeconomic maps publicly "
-    "for urban planning, without obtaining consent from the residents whose movements were "
-    "tracked. Because the GPS sampling is sparse in low-income districts, the predictions "
-    "are systematically less accurate there."
-)
+# A real held-out ISPRS paper. Audited via the section-aware XML path.
+EXAMPLE_XML = "heldout_xml/10.1016_j.isprsjprs.2026.05.032.xml"
 
-# fields stripped from each triple before publishing (corpus-leaking)
 DROP_EDGE_FIELDS = ("graph_source_docs",)
 
 
+def _strip_tags(s):
+    return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", s)).strip()
+
+
+def extract_doi_title_abstract(xml_path):
+    raw = open(xml_path, encoding="utf-8", errors="ignore").read()
+    m = re.search(r"<(?:xocs:|prism:|ce:)?doi>([^<]+)</", raw)
+    doi = m.group(1).strip() if m else os.path.basename(xml_path).replace(".xml", "").replace("_", "/", 1)
+    try:
+        title = parse_elsevier_xml(xml_path).get("title", "").strip()
+    except Exception:
+        title = ""
+    if not title:
+        m = re.search(r"<(?:dc:title|ce:title)[^>]*>(.*?)</(?:dc:title|ce:title)>", raw, re.S)
+        title = _strip_tags(m.group(1)) if m else os.path.basename(xml_path)
+    ab = ""
+    m = re.search(r"<dc:description>(.*?)</dc:description>", raw, re.S) \
+        or re.search(r"<ce:abstract[^>]*>(.*?)</ce:abstract>", raw, re.S)
+    if m:
+        ab = _strip_tags(m.group(1))
+        ab = re.sub(r"^Abstract\s*", "", ab, flags=re.I)
+    return doi, title, ab
+
+
 def main():
+    doi, title, abstract = extract_doi_title_abstract(EXAMPLE_XML)
+
     agent = DualTrackGeoAIAgent()
-    report, triples, graph_paths, docs = agent.analyze_text(EXAMPLE_INPUT)
+    report, triples, graph_paths, docs = agent.analyze_xml(EXAMPLE_XML)
 
     clean = []
     for t in triples:
@@ -60,11 +76,17 @@ def main():
                       "chain_id": t.get("chain_id", "")})
 
     data = {
-        "input": EXAMPLE_INPUT,
+        "source": {
+            "title": title,
+            "doi": doi,
+            "doi_url": "https://doi.org/" + doi,
+            "journal": "ISPRS Journal of Photogrammetry and Remote Sensing",
+            "abstract": abstract[:1200],
+        },
         "report": report,
         "triples": clean,
-        "graph_paths": graph_paths,          # public graph edges (node names + relations)
-        "track2_count": len(docs),           # count only — no corpus text / filenames
+        "graph_paths": graph_paths,     # public graph edges (node names + relations)
+        "track2_count": len(docs),      # count only — no corpus text / filenames
         "generated": datetime.date.today().isoformat(),
         "public_safe": True,
     }
@@ -74,6 +96,8 @@ def main():
         f.write(";\n")
 
     n_inst = sum(1 for t in clean if t["edge"].get("instantiation") == "INSTANTIATED")
+    print(f"paper: {title[:70]}")
+    print(f"doi:   {doi}")
     print(f"triples={len(clean)} | INSTANTIATED={n_inst} | graph_paths={len(graph_paths)} "
           f"| track2_chunks={len(docs)}")
     print(f"Wrote {OUT}")
