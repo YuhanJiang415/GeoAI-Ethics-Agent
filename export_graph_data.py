@@ -16,10 +16,10 @@ Two modes:
   --full                 -> keeps every field. Use for LOCAL inspection only;
                             do NOT commit the resulting file to a public repo.
 
-Re-run after rebuilding the graph (python triple_extractor_test.py).
+Re-run after rebuilding the graph (python -m geoai_audit.pipeline.build_graph).
 
-    python export_graph_data.py            # public-safe (publishable)
-    python export_graph_data.py --full     # full data (local only)
+    python visualization/export_graph_data.py            # public-safe (publishable)
+    python visualization/export_graph_data.py --full     # full data (local only)
 """
 import os
 import sys
@@ -28,7 +28,9 @@ import networkx as nx
 from collections import Counter
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-GRAPH = os.path.join(HERE, "..", "geoai_knowledge_bm_v2.graphml")
+ROOT = os.path.dirname(HERE)                       # repo root (GeoAI_Project/)
+sys.path.insert(0, ROOT)
+from geoai_audit.config import GRAPH_FILE as GRAPH  # single source of truth for paths
 OUT = os.path.join(HERE, "graph_data.js")
 
 # fields dropped in public-safe mode (not used to render; would leak data)

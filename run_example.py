@@ -22,17 +22,17 @@ import json
 import datetime
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.abspath(os.path.join(HERE, ".."))
+ROOT = os.path.abspath(os.path.join(HERE, ".."))   # repo root (GeoAI_Project/)
 OUT = os.path.join(HERE, "example_data.js")
 
-os.chdir(ROOT)
 sys.path.insert(0, ROOT)
 
-from graph_agent_answer_v2 import DualTrackGeoAIAgent          # noqa: E402
-from xml_parser import parse_elsevier_xml                       # noqa: E402
+from geoai_audit.agent.audit_agent import DualTrackGeoAIAgent   # noqa: E402
+from geoai_audit.pipeline.xml_parser import parse_elsevier_xml  # noqa: E402
+from geoai_audit.config import HELDOUT_DIR                       # noqa: E402
 
 # A real held-out ISPRS paper. Audited via the section-aware XML path.
-EXAMPLE_XML = "heldout_xml/10.1016_j.isprsjprs.2026.05.032.xml"
+EXAMPLE_XML = os.path.join(HELDOUT_DIR, "10.1016_j.isprsjprs.2026.05.032.xml")
 
 DROP_EDGE_FIELDS = ("graph_source_docs",)
 

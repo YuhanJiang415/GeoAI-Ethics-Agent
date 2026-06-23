@@ -11,7 +11,7 @@ store, then audits new papers against both.
 | File | What it shows |
 |------|---------------|
 | `index.html` | Landing page linking the two views |
-| `workflow.html` | The whole pipeline — offline build → online dual-track agent → 3 verification gates → entry points. Click any block for details. |
+| `workflow.html` | The whole pipeline — offline build → online dual-track agent → 4 verification gates → entry points. Click any block for details. |
 | `example.html` | A real audit run on one held-out paper (cited by DOI) — validated triples with provenance / quote / audit-vs-disclosure tags, the prose report, and the Track-2 retrieved literature chunks shown in full (text + source). |
 | `run_example.py` | Regenerates `example_data.js` by running the agent (`analyze_xml`) on the held-out paper. |
 | `knowledge_graph.html` | The built causal graph (301 nodes / 207 edges), fully interactive: drag nodes, search, filter by type, click any node/edge to inspect its role, type, harm family, relation and connections. |
@@ -19,17 +19,23 @@ store, then audits new papers against both.
 | `export_graph_data.py` | Regenerates `graph_data.js` from the knowledge graph. |
 | `lib/vis-network.min.js` | Vendored [vis-network](https://visjs.github.io/vis-network/) (so the page works fully offline). |
 
+This folder lives inside the **GeoAI_Project** package; the two scripts read the
+project's paths from `geoai_audit/config.py` (the graph at `artifacts/geoai_knowledge.graphml`,
+held-out papers at `data/heldout_xml/`), so run them from the **repo root**.
+
 ## Run locally
 
 These are static files — just open `index.html` in a browser. No server needed.
 
-## Regenerate the graph data
+## Regenerate the data
 
-After rebuilding the knowledge graph in the main project:
+After rebuilding the knowledge graph (`python -m geoai_audit.pipeline.build_graph`):
 
 ```bash
-python export_graph_data.py          # public-safe (what gets published)
-python export_graph_data.py --full   # full data incl. sources/evidence — LOCAL ONLY, do not commit
+# from the GeoAI_Project repo root
+python visualization/export_graph_data.py          # graph_data.js — public-safe (publishable)
+python visualization/export_graph_data.py --full   # full data incl. sources/evidence — LOCAL ONLY, do not commit
+python visualization/run_example.py                # example_data.js — re-runs the agent on the held-out paper (costs API calls)
 ```
 
 ## Ontology at a glance
