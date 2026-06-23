@@ -96,6 +96,19 @@
   #scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;
     transition:opacity .22s;z-index:20}
   #scrim.show{opacity:1;pointer-events:auto}
+  .scorenote{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:14px 16px;margin-top:14px;font-size:12.5px;line-height:1.6;color:var(--mut)}
+  .scorenote p{margin:0 0 9px} .scorenote p:last-child{margin-bottom:0} .scorenote b{color:var(--ink)}
+  .scorenote code{font-family:ui-monospace,Menlo,monospace;background:var(--panel2);
+    border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:11.5px;color:var(--ink)}
+  .scorenote .auto{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+  .scorenote .auto .m{flex:1;min-width:200px;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:9px 12px}
+  .scorenote .auto .m .mn{font-weight:700;color:var(--ink);font-size:12px;margin-bottom:3px}
+  .anc{margin:8px 0 0}
+  .anc .r{display:flex;gap:10px;align-items:flex-start;margin:7px 0}
+  .anc .s{flex:0 0 auto;width:22px;height:22px;border-radius:6px;display:grid;place-items:center;font-weight:700;font-size:12px;color:#fff}
+  .anc .s5{background:#16a34a} .anc .s3{background:#d97706} .anc .s1{background:#dc2626}
+  .anc .t{font-size:12px;line-height:1.5}
   .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:26px;font-size:11.5px;color:var(--mut)}
   .legend span{display:inline-flex;align-items:center;gap:6px}
   .legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
@@ -179,6 +192,20 @@
       <h2>Entry points</h2><span class="tag">what you run</span>
     </div>
     <div class="row" id="row-entry"></div>
+  </section>
+
+  <!-- EVALUATION -->
+  <section class="phase">
+    <div class="phase-hd">
+      <div class="num" style="background:var(--t2)">★</div>
+      <h2>Evaluation — how the audit output is scored</h2>
+      <span class="tag">reference-free · adapted from GenRES (NAACL 2024)</span>
+    </div>
+    <div class="phase-hd" style="margin:0 0 12px">
+      <h2 style="font-size:14px;color:var(--mut)">Four hand-scored dimensions (integers 1–5) on the agent's triples — click for the 5 / 3 / 1 anchors</h2>
+    </div>
+    <div class="gates" id="scores"></div>
+    <div class="scorenote" id="score-note"></div>
   </section>
 </div>
 
@@ -292,6 +319,42 @@ const GATES = {
       <p>This is why a well-grounded triple (passes ①–③) can still be reported only as a disclosure: grounding ≠ instantiation.</p>`},
 };
 
+/* ---------- evaluation / scoring rubric ---------- */
+function ANC(rows){return '<div class="anc">'+rows.map(([s,t])=>
+  `<div class="r"><span class="s s${s}">${s}</span><span class="t">${t}</span></div>`).join("")+'</div>';}
+
+const SCORES = {
+  F:{g:"F · Factualness",d:"Is the triple jointly entailed by the source? Judge head + relation + condition together; check the cited evidence span first, then the paper.",ct:"hand-scored 1–5 · adopted from GenRES",t:"F — Factualness",
+    body:`<p>Adopted from GenRES. The <b>condition carries the ethical nuance</b> and is part of the claim, so it is judged alongside the head and relation.</p>`+ANC([
+      [5,"Head, relation and condition all directly supported by the evidence span, and the span genuinely appears in the source."],
+      [3,"Head + relation supported, but the condition is unsupported, vague, or absent where the text implies one (the “real relation, hallucinated nuance” case)."],
+      [1,"A relation or entity is not supported by the source at all; the evidence span is fabricated, misquoted, or contradicts the claim."]])},
+  G:{g:"G · Granularity",d:"Is each node at a clean, reusable level of abstraction? Penalize both bare abstractions and sentence fragments.",ct:"hand-scored 1–5 · adopted from GenRES",t:"G — Granularity",
+    body:`<p>Adopted from GenRES. Penalizes <b>both extremes</b> — over-coarse abstractions and over-verbose fragments.</p>`+ANC([
+      [5,"Both nodes are crisp, reusable concepts — neither bare nor a fragment (e.g. “socioeconomic stereotyping”, “distance-decay effect”)."],
+      [3,"One node is noticeably off-level: over-coarse (“bias”, “risk”) or over-verbose (a clause that should be compressed)."],
+      [1,"Nodes unusable as graph entities — full sentences, multiple concepts crammed into one, or so generic they carry no information."]])},
+  O:{g:"O · Ontological validity",d:"Does the triple respect the closed DAG ontology — legal type transition, sensible relation polarity, valid harm family?",ct:"hand-scored 1–5 · contribution (no GenRES equiv.)",t:"O — Ontological validity",
+    body:`<p>The domain contribution. Legal spine <code>TechnicalFeature → RiskMechanism → EthicalImpact</code>, with <code>Mitigation → RiskMechanism / EthicalImpact</code> as legal side-edges. Polarity and harm-family validity judged here.</p>`+ANC([
+      [5,"Type transition legal AND relation polarity makes sense (e.g. Mitigation INHIBITS a RiskMechanism; TF PROMOTES a RiskMechanism). For an EthicalImpact, harm_family is present and correct."],
+      [3,"Legal node types but questionable polarity/relation, OR a TF→EI edge skipping a stated RM, OR harm_family on a soft/borderline case."],
+      [1,"Illegal: backward spine edge, two same-type nodes joined by a causal relation, a node typed outside the four classes, or an EthicalImpact whose harm_family fits none of the five."]])},
+  L:{g:"L · Composition validity",d:"Does C follow from A through B as a coherent causal argument? Scored on a connected chain A→B→C, not a single edge.",ct:"hand-scored 1–5 · chain-level (new)",t:"L — Composition validity",
+    body:`<p>Chain-level. Both edges can be individually correct yet fail to <b>compose</b> into one argument.</p>`+ANC([
+      [5,"Clean transitive chain: the same B that A produces is the B that drives C; reads as a sound cause → mechanism → harm argument."],
+      [3,"Both edges individually true, but the link is associative rather than genuinely causal, or the chain is under-specified."],
+      [1,"Non-sequitur: C does not follow from A through B; a mechanical join where the middle term B equivocates between the two edges."]])},
+};
+
+const SCORE_NOTE = `
+  <p><b>Scale.</b> Every dimension is an integer 1–5 (no 0). Anchors are sharp at <b>5</b> = clean pass, <b>3</b> = right-but-flawed, <b>1</b> = clear fail (2 and 4 are in-between). For aggregation each score rescales to [0,1] via <code>(X−1)/4</code>.</p>
+  <p><b>Aggregation.</b> Per triple, <code>S_triple</code> = geometric mean of rescaled <b>F·G·O</b> — any near-floor dimension tanks the triple. The benchmark workbook's <code>S_graph = 0.75·mean(S_triple) + 0.25·C_chain</code>; <b>L</b> is reported as a separate chain-level mean.</p>
+  <div class="auto">
+    <div class="m"><div class="mn">C_chain — structural recall (auto, not hand-scored)</div>Fraction of triples sitting on a closed TF→RM→EI spine. Reference-free — no gold key needed.</div>
+    <div class="m"><div class="mn">U — non-redundancy (diagnostic)</div>GenRES's Uniqueness, relocated to the synonym-fusion step — a property of the merge, not of one triple.</div>
+  </div>
+  <p><b>vs GenRES</b> (Jiang et al., NAACL 2024): adopts <b>F</b>actualness + <b>G</b>ranularity; drops document-level Topical-Similarity and Completeness (inapplicable to reference-free per-triple scoring); relocates Uniqueness → U; adds <b>O</b>ntological validity and chain-level <b>L</b> composition, which GenRES's open-domain setting has no equivalent for.</p>`;
+
 /* ---------- render ---------- */
 function card(key){
   const s=STAGES[key];
@@ -321,10 +384,17 @@ document.getElementById("gates").innerHTML=Object.keys(GATES).map(k=>{
     <div class="g-n">${g.g}</div><div class="g-d">${g.d}</div></div>`;
 }).join("");
 
+document.getElementById("scores").innerHTML=Object.keys(SCORES).map(k=>{
+  const s=SCORES[k];
+  return `<div class="gate" onclick="openDrawer('score','${k}')">
+    <div class="g-n">${s.g}</div><div class="g-d">${s.d}</div></div>`;
+}).join("");
+document.getElementById("score-note").innerHTML=SCORE_NOTE;
+
 /* ---------- drawer ---------- */
 function openDrawer(kind,key){
-  const o = kind==="gate"?GATES[key]:STAGES[key];
-  document.getElementById("dr-ct").textContent=o.ct||(kind==="gate"?"gate":"stage");
+  const o = kind==="gate"?GATES[key] : kind==="score"?SCORES[key] : STAGES[key];
+  document.getElementById("dr-ct").textContent=o.ct||kind;
   document.getElementById("dr-title").textContent=o.t;
   document.getElementById("dr-body").innerHTML=o.body;
   document.getElementById("drawer").classList.add("show");
