@@ -119,7 +119,7 @@
       <div class="topstat"><div class="n">301</div><div class="l">graph nodes</div></div>
       <div class="topstat"><div class="n">207</div><div class="l">causal edges</div></div>
       <div class="topstat"><div class="n">1107</div><div class="l">FAISS chunks</div></div>
-      <div class="topstat"><div class="n">3</div><div class="l">verification gates</div></div>
+      <div class="topstat"><div class="n">4</div><div class="l">verification gates</div></div>
     </div>
   </header>
 
@@ -165,7 +165,7 @@
     <div class="row" id="row-emit"></div>
 
     <div class="phase-hd" style="margin:22px 0 10px">
-      <h2 style="font-size:14px;color:var(--mut)">Three "verify-don't-trust" gates applied to every emitted triple</h2>
+      <h2 style="font-size:14px;color:var(--mut)">Four "verify-don't-trust" gates applied to every emitted triple</h2>
     </div>
     <div class="gates" id="gates"></div>
 
@@ -257,7 +257,7 @@ const STAGES = {
   emit:{ct:"online · LLM",t:"_emit_audit_triples()",file:"graph_agent_answer_v2.py · gemini-3.1-pro",color:"var(--run)",
     ds:"Auditor prompt → closed-ontology causal chains (JSON).",
     body:`<p>The slow reasoning model (<code>gemini-3.1-pro-preview</code>) receives Track-1 edges + Track-2 chunks + the audited text and emits causal chains as strict JSON, parsed by <code>robust_parse</code>.</p>
-      <p>Every emitted triple then runs the three gates →</p>`},
+      <p>Every emitted triple then runs the four gates →</p>`},
   narrate:{ct:"online · LLM",t:"_narrate_audit()",file:"graph_agent_answer_v2.py",color:"var(--run)",
     ds:"Validated triples → prose audit + structured appendix.",
     body:`<p>A second reasoning pass turns ONLY the validated triples into a 3-paragraph prose audit, qualified by each triple's confidence and instantiation tag, with the structured triple list appended.</p>
@@ -282,12 +282,14 @@ const GATES = {
       <ul><li><b>graph_exact</b> — head, relation, tail all match a retrieved edge.</li>
       <li><b>graph_anchored</b> — the risk→impact side matches; head re-worded to the paper's vocabulary.</li>
       <li><b>inferred</b> — neither endpoint matches; the model reasoned it.</li></ul>`},
-  quote:{g:"③ Quote + Instantiation",d:"verify_quote checks the cited sentence really occurs; the instantiation gate decides AUDIT vs DISCLOSURE.",ct:"gate · evidence",t:"Quote & instantiation gates",
-    body:`<p><b>verify_quote</b> — the model's verbatim <code>input_quote</code> must actually occur (fuzzy, whitespace/case tolerant) in the paper, else flagged.</p>
-      <h4>Instantiation gate</h4><p>A batched <code>gemini-3.1-pro</code> call tests each triple's <code>condition</code> against the paper's CONTRIBUTION:</p>
-      <ul><li><b>INSTANTIATED</b> — the paper's own method triggers the risk = real <b>audit finding</b> (must cite a verifiable span).</li>
-      <li><b>POTENTIAL</b> — category-level risk this paper doesn't trigger = <b>disclosure</b>.</li>
-      <li><b>NOT_TRIGGERED</b> — the paper neutralizes it.</li></ul>`},
+  quote:{g:"③ Quote",d:"verify_quote — the cited verbatim sentence must really occur in the paper, else the claim is flagged. No blind trust in the model's quote.",ct:"gate · evidence",t:"Quote gate",
+    body:`<p><b>verify_quote</b> — the model's verbatim <code>input_quote</code> must actually occur (fuzzy: whitespace/case/OCR tolerant) in the audited paper. If it can't be matched, the quote is flagged as unverified rather than trusted — so a fabricated or paraphrased "quote" never passes as evidence.</p>`},
+  instantiation:{g:"④ Instantiation",d:"the disclosure→audit converter: does THIS paper's own method actually trigger the risk (audit finding), or is it just a category-level risk (disclosure)?",ct:"gate · audit vs disclosure",t:"Instantiation gate",
+    body:`<p>The core point that separates an <b>audit finding</b> from a <b>disclosure</b>. A batched <code>gemini-3.1-pro</code> call tests each triple's <code>condition</code> against the paper's own CONTRIBUTION:</p>
+      <ul><li><b>INSTANTIATED</b> — the paper's own method performs the triggering action = a real <b>audit finding</b>. Must cite a verbatim span from the contribution, which is re-checked with <code>verify_quote</code>; if the span can't be verified it's downgraded.</li>
+      <li><b>POTENTIAL</b> — the technique is associated with this risk in general, but this paper doesn't trigger it = <b>disclosure</b>.</li>
+      <li><b>NOT_TRIGGERED</b> — the paper does the opposite / already neutralizes it.</li></ul>
+      <p>This is why a well-grounded triple (passes ①–③) can still be reported only as a disclosure: grounding ≠ instantiation.</p>`},
 };
 
 /* ---------- render ---------- */
