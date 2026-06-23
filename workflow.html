@@ -155,7 +155,7 @@
     <div class="phase-hd">
       <div class="num" style="background:var(--run)">2</div>
       <h2>Online dual-track agent</h2>
-      <span class="tag">DualTrackGeoAIAgent · graph_agent_answer_v2.py</span>
+      <span class="tag">DualTrackGeoAIAgent · geoai_audit/agent/audit_agent.py</span>
     </div>
 
     <div class="row" id="row-input"></div>
@@ -219,40 +219,40 @@
 <script>
 /* ---------- content model ---------- */
 const STAGES = {
-  corpus:{ct:"input",t:"GeoAI-ethics corpus",file:"geoai_ethics_data/ (28 PDFs)",color:"var(--build)",
+  corpus:{ct:"input",t:"GeoAI-ethics corpus",file:"data/corpus/ (28 PDFs)",color:"var(--build)",
     ds:"Shared source for BOTH tracks.",
     body:`<p>28 GeoAI-ethics research papers in PDF. This is the only raw input to the offline build — both the knowledge graph and the vector store are derived from it.</p>
       <h4>Feeds</h4><ul><li>Triple extraction → the graph (Track 1)</li><li>Chunk + embed → FAISS (Track 2)</li></ul>
       <h4>Note</h4><p>PDF is fine here: Track 2 only needs raw text for semantic retrieval. Section-aware XML matters only for the <i>audited</i> paper, not this background corpus.</p>`},
-  extract:{ct:"build · LLM",t:"extract_all()",file:"triple_extractor_test.py",color:"var(--build)",
+  extract:{ct:"build · LLM",t:"extract_all()",file:"geoai_audit/pipeline/build_graph.py",color:"var(--build)",
     ds:"gemini-3-flash reads each PDF, extracts ethics causal chains.",
-    body:`<p>Per paper, <code>gemini-3-flash-preview</code> runs a strict extraction prompt and writes <code>triples_bm_v2.json</code>.</p>
+    body:`<p>Per paper, <code>gemini-3-flash-preview</code> runs a strict extraction prompt and writes <code>artifacts/triples.json</code>.</p>
       <h4>Gates inside the prompt</h4><ul>
       <li><b>STEP-0 relevance gate</b> — non-ethics papers return <code>{"chains":[]}</code> and stop.</li>
       <li><b>Closed ontology</b> — 4 node types, 4 relations, 5 harm families only.</li>
       <li><b>Explicit-assertion gate</b> — extract only if the text itself states a harm, never inferred.</li></ul>
-      <h4>Outputs</h4><div class="io"><span class="chip">triples_bm_v2.json</span><span class="chip">chains_bm_v2.json</span><span class="chip">extraction_summary_bm_v2.csv</span></div>`},
-  build:{ct:"build · graph",t:"build_graph_from_json()",file:"triple_extractor_test.py",color:"var(--t1)",
+      <h4>Outputs</h4><div class="io"><span class="chip">artifacts/triples.json</span><span class="chip">artifacts/chains.json</span><span class="chip">artifacts/logs/extraction_summary.csv</span></div>`},
+  build:{ct:"build · graph",t:"build_graph_from_json()",file:"geoai_audit/pipeline/build_graph.py",color:"var(--t1)",
     ds:"Synonym fusion + topology gate → networkx DiGraph.",
     body:`<p>Turns the raw triples into the causal graph the online agent reads.</p>
       <h4>Steps</h4><ul>
       <li><b>keyword_alignment()</b> — per-type Agglomerative clustering over Gemini embeddings (cosine, threshold 0.07) canonicalizes synonymous entities.</li>
       <li><b>validate_triple()</b> — topology gate drops any edge that violates the closed ontology (TF→RM→EI etc).</li>
       <li>Repeated edges accumulate <code>weight</code>, <code>sources</code>, <code>conditions</code>, <code>evidence</code>.</li></ul>
-      <h4>Output → Track-1 data</h4><div class="io"><span class="chip">geoai_knowledge_bm_v2.graphml</span></div>
+      <h4>Output → Track-1 data</h4><div class="io"><span class="chip">artifacts/geoai_knowledge.graphml</span></div>
       <p style="margin-top:8px">301 nodes · 207 edges (PROMOTES 164 / INHIBITS 43).</p>`},
-  vstore:{ct:"build · vectors",t:"_build_vector_store()",file:"graph_agent_answer_v2.py",color:"var(--t2)",
+  vstore:{ct:"build · vectors",t:"_build_vector_store()",file:"geoai_audit/agent/audit_agent.py",color:"var(--t2)",
     ds:"Chunk PDFs + embed → FAISS index (lazy, auto-rebuilds).",
     body:`<p>Built lazily by the agent's <code>__init__</code> when the index is missing or older than the graph.</p>
       <h4>Steps</h4><ul>
       <li><code>PyPDFLoader</code> loads each PDF; References/Bibliography stripped by regex.</li>
       <li><code>RecursiveCharacterTextSplitter</code> — chunk 2000 / overlap 400.</li>
       <li>Embed with <code>gemini-embedding-001</code> (3072-dim), 500/batch with 15 s sleeps for rate limits.</li></ul>
-      <h4>Output → Track-2 data</h4><div class="io"><span class="chip">faiss_index_bm_v2/</span><span class="chip">node_embeddings_cache_bm_v2.npy</span></div>
+      <h4>Output → Track-2 data</h4><div class="io"><span class="chip">cache/faiss_index/</span><span class="chip">cache/node_embeddings.npy</span></div>
       <p style="margin-top:8px">1107 chunks indexed.</p>`},
-  insight:{ct:"build · inspect",t:"insight.py",file:"insight.py",color:"var(--build)",
+  insight:{ct:"build · inspect",t:"graph_insight.py",file:"geoai_audit/tools/graph_insight.py",color:"var(--build)",
     ds:"Stats + PyVis HTML preview of the graph.",
-    body:`<p>Optional. Reads the graphml and renders <code>graph_preview_bm_v2.html</code> plus type/degree statistics.</p>
+    body:`<p>Optional. Reads the graphml and renders <code>artifacts/graph_preview.html</code> plus type/degree statistics.</p>
       <h4>Tip</h4><p>The interactive explorer in this folder (<a href="knowledge_graph.html">knowledge_graph.html</a>) is a richer version of this.</p>`},
 
   input:{ct:"online · routing",t:"Input routing",file:"analyze_xml / analyze_pdf / analyze_text",color:"var(--run)",
@@ -279,13 +279,13 @@ const STAGES = {
       <h4>Produces</h4><p>A list of <b>typed, directed</b> structured edges (TF→RM→EI…) — the causal skeleton the auditor must obey, and the reference for provenance checking.</p>`},
   t2_search:{ct:"track 2",t:"Semantic retrieval",file:"vectorstore.similarity_search(k=3)",color:"var(--t2)",
     ds:"Top-3 background chunks from FAISS.",
-    body:`<p>The audited text retrieves its 3 most similar chunks from <code>faiss_index_bm_v2</code>.</p>
+    body:`<p>The audited text retrieves its 3 most similar chunks from <code>cache/faiss_index/</code>.</p>
       <h4>Role</h4><p>Provided to the auditor as <i>"definitions and context"</i> only — explicitly NOT a source of claims. On XML audits the paper's own background sections are appended here too, for term-grounding.</p>`},
-  emit:{ct:"online · LLM",t:"_emit_audit_triples()",file:"graph_agent_answer_v2.py · gemini-3.1-pro",color:"var(--run)",
+  emit:{ct:"online · LLM",t:"_emit_audit_triples()",file:"geoai_audit/agent/audit_agent.py · gemini-3.1-pro",color:"var(--run)",
     ds:"Auditor prompt → closed-ontology causal chains (JSON).",
     body:`<p>The slow reasoning model (<code>gemini-3.1-pro-preview</code>) receives Track-1 edges + Track-2 chunks + the audited text and emits causal chains as strict JSON, parsed by <code>robust_parse</code>.</p>
       <p>Every emitted triple then runs the four gates →</p>`},
-  narrate:{ct:"online · LLM",t:"_narrate_audit()",file:"graph_agent_answer_v2.py",color:"var(--run)",
+  narrate:{ct:"online · LLM",t:"_narrate_audit()",file:"geoai_audit/agent/audit_agent.py",color:"var(--run)",
     ds:"Validated triples → prose audit + structured appendix.",
     body:`<p>A second reasoning pass turns ONLY the validated triples into a 3-paragraph prose audit, qualified by each triple's confidence and instantiation tag, with the structured triple list appended.</p>
       <h4>Returns</h4><div class="io"><span class="chip">report (prose)</span><span class="chip">audit_triples</span><span class="chip">graph_paths</span><span class="chip">docs</span></div>`},
@@ -293,11 +293,11 @@ const STAGES = {
   app:{ct:"entry · UI",t:"app.py",file:"streamlit run app.py",color:"var(--acc)",
     ds:"Streamlit auditor with XML / Text / PDF tabs.",
     body:`<p>Interactive auditor. Three tabs (XML recommended, Text, PDF). Renders the validated triples (with provenance colour + quote✓/✗), the prose report, and both tracks' evidence.</p>
-      <h4>Run</h4><p><code>cd agent &amp;&amp; streamlit run app.py</code></p>`},
-  bench:{ct:"entry · eval",t:"benchmark_run.py",file:"python benchmark_run.py ./heldout_xml out.xlsx",color:"var(--acc)",
+      <h4>Run</h4><p>From the repo root: <code>streamlit run app.py</code></p>`},
+  bench:{ct:"entry · eval",t:"benchmark.py",file:"python -m geoai_audit.evaluation.benchmark",color:"var(--acc)",
     ds:"Batch-audit held-out XML → graded Excel workbook.",
-    body:`<p>Runs every XML in <code>heldout_xml/</code> through <code>analyze_xml</code>, computes <code>C_chain</code> (structural recall, reference-free), and writes a two-sheet grading workbook.</p>
-      <h4>Outputs</h4><div class="io"><span class="chip">agent_benchmark.xlsx</span><span class="chip">..._raw.json</span></div>
+    body:`<p>Runs every XML in <code>data/heldout_xml/</code> through <code>analyze_xml</code>, computes <code>C_chain</code> (structural recall, reference-free), and writes a two-sheet grading workbook.</p>
+      <h4>Outputs</h4><div class="io"><span class="chip">artifacts/eval/agent_benchmark.xlsx</span><span class="chip">artifacts/eval/agent_benchmark_raw.json</span></div>
       <h4>Scoring</h4><p>Two layers: F/G/O/L precision (manual on TripleDetail) + C_chain structural recall (auto). <code>S_graph = 0.75·S_triple + 0.25·C_chain</code>.</p>`},
 };
 
