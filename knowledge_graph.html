@@ -101,13 +101,14 @@
     <h1>GeoAI Ethics&nbsp;· Knowledge Graph</h1>
     <div id="graph-view">
       <div class="sub">Causal ontology distilled from 28 GeoAI-ethics papers.
-        Drag to explore · <b style="color:#0b1020">dark-ringed nodes</b> were merged from several surface forms (click to see which).</div>
+        Drag to explore · <b style="color:#0b1020">dark-ringed nodes</b> were merged from several surface forms (click to see which).
+        Dashed grey links are <b>IS_A</b> — impacts roll up to 5 harm-category hubs (▪).</div>
 
       <div class="sec">
       <h2>Corpus</h2>
       <div class="stat-grid">
         <div class="stat"><div class="n" id="s-nodes">–</div><div class="l">nodes</div></div>
-        <div class="stat"><div class="n" id="s-edges">–</div><div class="l">causal edges</div></div>
+        <div class="stat"><div class="n" id="s-edges">–</div><div class="l">edges (causal + IS_A)</div></div>
       </div>
     </div>
 
@@ -132,6 +133,7 @@
         <div class="btns">
           <button id="btn-fit">Fit view</button>
           <button id="btn-physics">Pause physics</button>
+          <button id="btn-isa">Hide IS_A</button>
         </div>
       </div>
     </div>
@@ -180,10 +182,11 @@ try{
     RiskMechanism:{c:getCSS('--rm'),label:"Risk Mechanism",desc:"the process by which a feature generates harm (the 'how')"},
     EthicalImpact:{c:getCSS('--ei'),label:"Ethical Impact",desc:"the realized harm to humans/society (carries a harm_family)"},
     Mitigation:{c:getCSS('--mi'),label:"Mitigation",desc:"a control that reduces a risk mechanism or impact"},
+    HarmCategory:{c:"#475569",label:"Harm category",desc:"a harm-family hub that ethical impacts roll up to via IS_A"},
     Unknown:{c:getCSS('--unk'),label:"Unknown",desc:""}
   };
   const REL_COLOR = {PROMOTES:"#e11d48", INHIBITS:"#059669", NEGATES:"#0891b2",
-                     PREREQUISITE_OF:"#7c3aed", RELATED_TO:"#94a3b8"};
+                     PREREQUISITE_OF:"#7c3aed", IS_A:"#cbd5e1", RELATED_TO:"#94a3b8"};
 
   const D = window.GRAPH_DATA;
   const active = new Set(Object.keys(TYPE));
@@ -192,7 +195,7 @@ try{
   const nodes = new vis.DataSet(D.nodes.map(n=>{
     const merged = n.merged_from && n.merged_from.length;
     return {
-    id:n.id, label:wrap(n.label,22), _raw:n, shape:"dot", level:n.level,
+    id:n.id, label:wrap(n.label,22), _raw:n, shape:n.type==="HarmCategory"?"square":"dot", level:n.level,
     size: 8 + 22*Math.sqrt(n.degree/degMax),
     borderWidth: merged?4:2,
     color:{background:(TYPE[n.type]||TYPE.Unknown).c, border: merged?"#0b1020":"#ffffff",
@@ -201,13 +204,17 @@ try{
     };
   }));
   const wMax = Math.max(1, ...D.edges.map(e=>e.weight));
-  const edges = new vis.DataSet(D.edges.map((e,i)=>({
+  const edges = new vis.DataSet(D.edges.map((e,i)=>{
+    const isa = e.relation==="IS_A";
+    return {
     id:"e"+i, from:e.from, to:e.to, _raw:e,
-    arrows:{to:{enabled:true,scaleFactor:.55}},
-    width: 1 + 3*(e.weight/wMax),
-    color:{color:REL_COLOR[e.relation]||"#94a3b8",opacity:.7,highlight:"#1f2733"},
+    arrows: isa?{to:false}:{to:{enabled:true,scaleFactor:.55}},
+    dashes: isa?[3,4]:false,
+    width: isa?0.6:(1 + 3*(e.weight/wMax)),
+    color:{color: isa?"#cbd5e1":(REL_COLOR[e.relation]||"#94a3b8"), opacity: isa?0.5:0.7, highlight:"#1f2733"},
     smooth:{type:"dynamic"}
-  })));
+    };
+  }));
 
   const HIER = {enabled:true,direction:"LR",
     levelSeparation:520,nodeSpacing:30,treeSpacing:26,blockShifting:true,edgeMinimization:true};
@@ -341,6 +348,13 @@ try{
   const pb=document.getElementById("btn-physics");
   pb.onclick=()=>{physicsOn=!physicsOn;net.setOptions({physics:{enabled:physicsOn}});
     pb.textContent=physicsOn?"Pause physics":"Resume physics";};
+  let isaShown=true;
+  document.getElementById("btn-isa").onclick=function(){
+    isaShown=!isaShown;
+    edges.forEach(e=>{ if(e._raw.relation==="IS_A") edges.update({id:e.id,hidden:!isaShown}); });
+    nodes.forEach(n=>{ if(n._raw.type==="HarmCategory") nodes.update({id:n.id,hidden:!isaShown}); });
+    this.textContent=isaShown?"Hide IS_A":"Show IS_A";
+  };
   net.once("stabilizationIterationsDone",()=>{net.setOptions({physics:{enabled:false}});
     physicsOn=false;pb.textContent="Resume physics";net.fit({animation:false});
     document.getElementById("hint").textContent="layout settled · drag nodes freely · dark ring = merged";});

@@ -92,6 +92,8 @@ def main(full=False, graph_path=None, out_path=None):
 
     edges = []
     for u, v, d in G.edges(data=True):
+        if d.get("derived") == "lifted":   # skip redundant concept-level causal duplicates
+            continue
         e = {
             "from": u,
             "to": v,
@@ -106,7 +108,7 @@ def main(full=False, graph_path=None, out_path=None):
 
     stats = {
         "nodes": G.number_of_nodes(),
-        "edges": G.number_of_edges(),
+        "edges": len(edges),
         "merged_nodes": sum(1 for nd in nodes if nd.get("merged_from")),
         "by_type": dict(Counter(nd["type"] for nd in nodes)),
         "by_relation": dict(Counter(e["relation"] for e in edges)),
