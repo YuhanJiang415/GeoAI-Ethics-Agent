@@ -6,7 +6,6 @@
 <title>GeoAI Ethics Knowledge Graph</title>
 <script src="lib/vis-network.min.js"></script>
 <script src="graph_data.js"></script>
-<script src="communities_data.js"></script>
 <style>
   :root{
     --bg:#f6f8fb; --panel:#ffffff; --panel2:#eef1f6; --line:#dfe3ea;
@@ -100,13 +99,10 @@
 <div id="app">
   <aside id="rail">
     <h1>GeoAI Ethics&nbsp;· Knowledge Graph</h1>
-    <div class="tabs">
-      <button class="tab active" onclick="switchView('graph')">📊 Graph</button>
-      <button class="tab" onclick="switchView('communities')">🏘️ Communities</button>
-    </div>
     <div id="graph-view">
       <div class="sub">Causal ontology distilled from 28 GeoAI-ethics papers.
-        Drag nodes to explore · click a node or edge for details.</div>
+        Read left → right: technical feature → risk mechanism → ethical impact.
+        Click a node or edge for details.</div>
 
       <div class="sec">
       <h2>Corpus</h2>
@@ -141,15 +137,7 @@
       </div>
     </div>
 
-    <div id="communities-view" style="display:none;overflow:hidden;flex:1">
-      <div style="padding:0 16px 8px;border-bottom:1px solid var(--line);font-size:11px;color:var(--mut)">
-        94 communities detected by Louvain (modularity 0.9819). Click to highlight.
-      </div>
-      <div id="communities-list" style="max-height:40%;overflow-y:auto;border-bottom:1px solid var(--line)"></div>
-      <div id="communities-net" style="flex:1;background:#fbfcfe;position:relative"></div>
-    </div>
-
-    <div class="nav">↩ <a href="index.html">Overview</a> &nbsp;·&nbsp; <a href="workflow.html">Workflow</a> &nbsp;·&nbsp; <a href="example.html">Example</a></div>
+    <div class="nav">↩ <a href="index.html">Overview</a> &nbsp;·&nbsp; <a href="sankey.html">Sankey</a> &nbsp;·&nbsp; <a href="workflow.html">Workflow</a> &nbsp;·&nbsp; <a href="example.html">Example</a></div>
     <div class="foot">
       Read-only view of <code>artifacts/geoai_knowledge.graphml</code>.
       Rebuild with <code>python -m geoai_audit.pipeline.build_graph</code>, then re-run
@@ -160,7 +148,7 @@
   <div id="stage">
     <div id="net"></div>
     <div id="err"></div>
-    <div class="hint" id="hint">scroll = zoom · drag canvas = pan · drag node = reposition</div>
+    <div class="hint" id="hint">left → right: Cause → Mechanism → Harm &nbsp;·&nbsp; scroll = zoom · drag = pan</div>
     <div id="detail">
       <div class="hd">
         <span class="x" onclick="closeDetail()">✕</span>
@@ -176,26 +164,6 @@
 /* ---- helpers (declared first so the code below can use them) ---- */
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function cssEsc(s){return String(s).replace(/['\\]/g,"\\$&");}
-let communitiesNetwork = null;
-function switchView(view){
-  const tabs = document.querySelectorAll('.tab');
-  tabs.forEach(t => t.classList.remove('active'));
-  event.target.classList.add('active');
-
-  const graphView = document.getElementById('graph-view');
-  const commView = document.getElementById('communities-view');
-
-  if(view === 'graph'){
-    graphView.style.display = 'block';
-    commView.style.display = 'none';
-    setTimeout(() => { window._net.redraw(); window._net.fit({animation:false}); }, 100);
-  } else {
-    graphView.style.display = 'none';
-    commView.style.display = 'block';
-    if(!communitiesNetwork) initCommunitiesNetwork();
-    setTimeout(() => { if(communitiesNetwork) communitiesNetwork.redraw(); }, 100);
-  }
-}
 function wrap(s,n){
   s=String(s);const words=s.split(" ");let line="",out=[];
   for(const w of words){if((line+" "+w).trim().length>n){out.push(line.trim());line=w;}else line+=" "+w;}
@@ -223,7 +191,7 @@ try{
 
   const degMax = Math.max(1, ...D.nodes.map(n=>n.degree));
   const nodes = new vis.DataSet(D.nodes.map(n=>({
-    id:n.id, label:wrap(n.label,22), _raw:n, shape:"dot",
+    id:n.id, label:wrap(n.label,22), _raw:n, shape:"dot", level:n.level,
     size: 8 + 22*Math.sqrt(n.degree/degMax),
     color:{background:(TYPE[n.type]||TYPE.Unknown).c, border:"#ffffff",
            highlight:{background:(TYPE[n.type]||TYPE.Unknown).c,border:"#1f2733"}},
@@ -235,13 +203,17 @@ try{
     arrows:{to:{enabled:true,scaleFactor:.55}},
     width: 1 + 3*(e.weight/wMax),
     color:{color:REL_COLOR[e.relation]||"#94a3b8",opacity:.7,highlight:"#1f2733"},
-    smooth:{type:"dynamic"}
+    smooth:{type:"cubicBezier",forceDirection:"horizontal",roundness:0.2}
   })));
 
+  const HIER = {enabled:true,direction:"LR",
+    levelSeparation:520,nodeSpacing:30,treeSpacing:26,blockShifting:true,edgeMinimization:true};
+  const FORCE = {solver:"forceAtlas2Based",
+    forceAtlas2Based:{gravitationalConstant:-45,centralGravity:.008,springLength:120,springConstant:.06,damping:.5,avoidOverlap:.6},
+    stabilization:{iterations:220},minVelocity:.5};
   const net = new vis.Network(document.getElementById("net"), {nodes,edges}, {
-    physics:{solver:"forceAtlas2Based",
-      forceAtlas2Based:{gravitationalConstant:-45,centralGravity:.008,springLength:120,springConstant:.06,damping:.5,avoidOverlap:.6},
-      stabilization:{iterations:220},minVelocity:.5},
+    layout:{improvedLayout:false, hierarchical:HIER},
+    physics:false,
     interaction:{hover:true,tooltipDelay:120,navigationButtons:false,keyboard:false},
     nodes:{borderWidth:2}, edges:{selectionWidth:2}
   });
@@ -359,118 +331,18 @@ try{
     if(hit){net.focus(hit.id,{scale:1.2,animation:true});showNode(hit.id);}
   });
   document.getElementById("btn-fit").onclick=()=>net.fit({animation:true});
-  let physicsOn=true;
+  let layered=true;
   const pb=document.getElementById("btn-physics");
-  pb.onclick=()=>{physicsOn=!physicsOn;net.setOptions({physics:{enabled:physicsOn}});
-    pb.textContent=physicsOn?"Pause physics":"Resume physics";};
-  net.once("stabilizationIterationsDone",()=>{net.setOptions({physics:{enabled:false}});
-    physicsOn=false;pb.textContent="Resume physics";net.fit({animation:false});
-    document.getElementById("hint").textContent="layout settled · drag nodes freely";});
-  // belt-and-braces: make sure the canvas sizes to its box and the graph is framed
-  setTimeout(()=>{net.redraw();net.fit({animation:false});},400);
-  window.addEventListener("resize",()=>net.fit({animation:false}));
-
-  /* ---- communities view initialization ---- */
-  window.initCommunitiesNetwork = function(){
-    if(typeof window.COMMUNITIES_DATA === "undefined"){
-      fail("communities_data.js failed to load");
-      return;
-    }
-
-    const C = window.COMMUNITIES_DATA;
-    const commList = document.getElementById("communities-list");
-    commList.innerHTML = "";
-
-    const harmColorMap = {
-      'PrivacyViolation': '#ff6b6b',
-      'EqualRightsViolation': '#ffa94d',
-      'PhysicalHarm': '#ff8787',
-      'EconomicLoss': '#ffb74d',
-      'PsychologicalHarm': '#ba68c8',
-    };
-
-    // Build community network visualization
-    const commNodes = new vis.DataSet(C.nodes.map(n => ({
-      id: n.id,
-      label: `C${n.id}\n(${parseInt(n.label.match(/\((\d+)n/)?.[1]||0)})`,
-      title: n.title || `Community ${n.id}`,
-      color: n.color || '#cccccc',
-      size: n.size || 20,
-      shape: 'dot',
-      font: {size: 11}
-    })));
-
-    const commEdges = new vis.DataSet(C.edges.map((e, i) => ({
-      id: 'ce' + i,
-      from: e.from,
-      to: e.to,
-      color: {color: '#cccccc', opacity: 0.4},
-      width: 0.5
-    })));
-
-    communitiesNetwork = new vis.Network(
-      document.getElementById("communities-net"),
-      {nodes: commNodes, edges: commEdges},
-      {
-        physics: {
-          solver: "forceAtlas2Based",
-          forceAtlas2Based: {
-            gravitationalConstant: -50,
-            centralGravity: 0.01,
-            springLength: 150,
-            springConstant: 0.04,
-            damping: 0.5,
-            avoidOverlap: 0.8
-          },
-          stabilization: {iterations: 150},
-          minVelocity: 0.5
-        },
-        interaction: {hover: true, tooltipDelay: 120, navigationButtons: false, keyboard: false},
-        nodes: {borderWidth: 2}
-      }
-    );
-
-    // Populate list with clickable cards
-    const sortedComms = [...C.nodes].sort((a,b) => (b.size||0) - (a.size||0));
-    sortedComms.forEach(comm => {
-      const card = document.createElement("div");
-      const mainHarm = comm.title ? comm.title.split('Harm: ')[1]?.split('\n')[0] || 'Mixed' : 'Mixed';
-      const color = harmColorMap[mainHarm.replace(/^\s+|\s+$/g, '')] || '#cccccc';
-
-      card.style.cssText = `background:#f9f9f9;border:1px solid #ddd;border-left:4px solid ${color};padding:8px;border-radius:3px;margin:4px 8px;cursor:pointer;font-size:11px;user-select:none`;
-
-      const nodeCount = parseInt(comm.label.match(/\((\d+)n/)?.[1]||0);
-      const edgeCount = parseInt(comm.label.match(/(\d+)e/)?.[1]||0);
-
-      card.innerHTML = `
-        <div style="font-weight:bold;color:#2563eb">C${comm.id}</div>
-        <div style="color:#666;font-size:10px;margin:2px 0">
-          📍${nodeCount}n 🔗${edgeCount}e 🔀${(comm.density*100||0).toFixed(0)}%
-        </div>
-        <div style="margin-top:2px">
-          <span style="display:inline-block;background:${color};color:white;padding:1px 4px;border-radius:2px;font-size:9px">
-            ${mainHarm}
-          </span>
-        </div>
-      `;
-
-      card.onmouseover = () => {
-        card.style.background = '#e8f5e9';
-        communitiesNetwork.selectNodes([comm.id]);
-      };
-      card.onmouseout = () => {
-        card.style.background = '#f9f9f9';
-        communitiesNetwork.unselectAll();
-      };
-
-      commList.appendChild(card);
-    });
-
-    communitiesNetwork.once("stabilizationIterationsDone", () => {
-      communitiesNetwork.setOptions({physics: {enabled: false}});
-      communitiesNetwork.fit({animation: false});
-    });
+  pb.textContent="Free layout";
+  pb.onclick=()=>{
+    layered=!layered;
+    if(layered){ net.setOptions({layout:{hierarchical:HIER},physics:false}); pb.textContent="Free layout"; }
+    else{ net.setOptions({layout:{hierarchical:{enabled:false}},physics:FORCE}); pb.textContent="Layered layout"; }
+    setTimeout(()=>net.fit({animation:true}),350);
   };
+  // belt-and-braces: make sure the canvas sizes to its box and the graph is framed
+  setTimeout(()=>{net.redraw();net.moveTo({scale:0.6,animation:false});},800);
+  window.addEventListener("resize",()=>net.redraw());
 
 }catch(err){ fail(err.message||String(err)); console.error(err); }
 </script>

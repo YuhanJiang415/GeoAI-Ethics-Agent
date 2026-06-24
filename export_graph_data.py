@@ -44,10 +44,17 @@ def _num(x, default=1):
         return default
 
 
-def main(full=False):
-    if not os.path.exists(GRAPH):
-        raise SystemExit(f"Graph not found: {GRAPH} (run triple_extractor_test.py first)")
-    G = nx.read_graphml(GRAPH)
+# causal stage -> column index for the hierarchical (left-to-right) layout
+LEVEL = {"TechnicalFeature": 0, "RiskMechanism": 1, "EthicalImpact": 2,
+         "Mitigation": 1, "HarmCategory": 3, "Concept": 1}
+
+
+def main(full=False, graph_path=None, out_path=None):
+    graph = graph_path or GRAPH
+    out = out_path or OUT
+    if not os.path.exists(graph):
+        raise SystemExit(f"Graph not found: {graph}")
+    G = nx.read_graphml(graph)
 
     nodes = []
     for n, d in G.nodes(data=True):
@@ -55,6 +62,7 @@ def main(full=False):
             "id": n,
             "label": d.get("label", n),
             "type": d.get("type", "Unknown"),
+            "level": LEVEL.get(d.get("type", "Unknown"), 1),
             "harm_family": d.get("harm_family", "") or "",
             "degree": int(G.degree(n)),
             "indeg": int(G.in_degree(n)),
@@ -87,7 +95,7 @@ def main(full=False):
     }
 
     data = {"stats": stats, "nodes": nodes, "edges": edges, "public_safe": not full}
-    with open(OUT, "w", encoding="utf-8") as f:
+    with open(out, "w", encoding="utf-8") as f:
         f.write("window.GRAPH_DATA = ")
         json.dump(data, f, ensure_ascii=False, indent=1)
         f.write(";\n")
@@ -95,8 +103,13 @@ def main(full=False):
     mode = "FULL (local only — do not publish)" if full else "PUBLIC-SAFE (publishable)"
     print(json.dumps(stats, indent=2, ensure_ascii=False))
     print(f"\nMode: {mode}")
-    print(f"Wrote {OUT}")
+    print(f"Wrote {out}")
+
+
+def _arg(flag):
+    a = sys.argv
+    return a[a.index(flag) + 1] if flag in a and a.index(flag) + 1 < len(a) else None
 
 
 if __name__ == "__main__":
-    main(full=("--full" in sys.argv))
+    main(full=("--full" in sys.argv), graph_path=_arg("--graph"), out_path=_arg("--out"))
