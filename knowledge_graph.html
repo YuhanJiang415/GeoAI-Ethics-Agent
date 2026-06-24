@@ -141,10 +141,12 @@
       </div>
     </div>
 
-    <div id="communities-view" style="display:none;overflow-y:auto;flex:1">
-      <div class="sub">94 ethical risk communities detected by Louvain algorithm.
-        Click a community to explore its structure and key nodes.</div>
-      <div id="communities-list"></div>
+    <div id="communities-view" style="display:none;overflow:hidden;flex:1">
+      <div style="padding:0 16px 8px;border-bottom:1px solid var(--line);font-size:11px;color:var(--mut)">
+        94 communities detected by Louvain (modularity 0.9819). Click to highlight.
+      </div>
+      <div id="communities-list" style="max-height:40%;overflow-y:auto;border-bottom:1px solid var(--line)"></div>
+      <div id="communities-net" style="flex:1;background:#fbfcfe;position:relative"></div>
     </div>
 
     <div class="nav">↩ <a href="index.html">Overview</a> &nbsp;·&nbsp; <a href="workflow.html">Workflow</a> &nbsp;·&nbsp; <a href="example.html">Example</a></div>
@@ -387,36 +389,86 @@ try{
       'PsychologicalHarm': '#ba68c8',
     };
 
-    C.nodes.forEach(comm => {
-      const card = document.createElement("div");
-      card.style.cssText = "background:#f9f9f9;border:1px solid #ddd;border-left:4px solid " +
-        (harmColorMap[Object.keys(C.nodes[comm.id].harm || {})[0]] || '#ccc') +
-        ";padding:10px;border-radius:4px;margin-bottom:8px;cursor:pointer;font-size:12px";
+    // Build community network visualization
+    const commNodes = new vis.DataSet(C.nodes.map(n => ({
+      id: n.id,
+      label: `C${n.id}\n(${parseInt(n.label.match(/\((\d+)n/)?.[1]||0)})`,
+      title: n.title || `Community ${n.id}`,
+      color: n.color || '#cccccc',
+      size: n.size || 20,
+      shape: 'dot',
+      font: {size: 11}
+    })));
 
-      const harmText = comm.title ? comm.title.split('Harm: ')[1] || 'Unknown' : 'Unknown';
+    const commEdges = new vis.DataSet(C.edges.map((e, i) => ({
+      id: 'ce' + i,
+      from: e.from,
+      to: e.to,
+      color: {color: '#cccccc', opacity: 0.4},
+      width: 0.5
+    })));
+
+    communitiesNetwork = new vis.Network(
+      document.getElementById("communities-net"),
+      {nodes: commNodes, edges: commEdges},
+      {
+        physics: {
+          solver: "forceAtlas2Based",
+          forceAtlas2Based: {
+            gravitationalConstant: -50,
+            centralGravity: 0.01,
+            springLength: 150,
+            springConstant: 0.04,
+            damping: 0.5,
+            avoidOverlap: 0.8
+          },
+          stabilization: {iterations: 150},
+          minVelocity: 0.5
+        },
+        interaction: {hover: true, tooltipDelay: 120, navigationButtons: false, keyboard: false},
+        nodes: {borderWidth: 2}
+      }
+    );
+
+    // Populate list with clickable cards
+    const sortedComms = [...C.nodes].sort((a,b) => (b.size||0) - (a.size||0));
+    sortedComms.forEach(comm => {
+      const card = document.createElement("div");
+      const mainHarm = comm.title ? comm.title.split('Harm: ')[1]?.split('\n')[0] || 'Mixed' : 'Mixed';
+      const color = harmColorMap[mainHarm.replace(/^\s+|\s+$/g, '')] || '#cccccc';
+
+      card.style.cssText = `background:#f9f9f9;border:1px solid #ddd;border-left:4px solid ${color};padding:8px;border-radius:3px;margin:4px 8px;cursor:pointer;font-size:11px;user-select:none`;
+
+      const nodeCount = parseInt(comm.label.match(/\((\d+)n/)?.[1]||0);
+      const edgeCount = parseInt(comm.label.match(/(\d+)e/)?.[1]||0);
+
       card.innerHTML = `
-        <strong style="color:#2563eb">Community ${comm.id}</strong>
-        <div style="color:#666;margin-top:3px">
-          ${comm.label.replace(/\n/g, ' ')}
+        <div style="font-weight:bold;color:#2563eb">C${comm.id}</div>
+        <div style="color:#666;font-size:10px;margin:2px 0">
+          📍${nodeCount}n 🔗${edgeCount}e 🔀${(comm.density*100||0).toFixed(0)}%
         </div>
-        <div style="color:#999;font-size:11px;margin-top:5px">
-          📍 ${comm.size || 0} nodes · 🔗 ~${Math.round((comm.size||1)*0.8)} edges
-        </div>
-        <div style="margin-top:5px">
-          <span style="display:inline-block;background:#ff6b6b;color:white;padding:2px 6px;border-radius:3px;font-size:10px">
-            ${harmText.split('\n')[0]}
+        <div style="margin-top:2px">
+          <span style="display:inline-block;background:${color};color:white;padding:1px 4px;border-radius:2px;font-size:9px">
+            ${mainHarm}
           </span>
         </div>
       `;
 
-      card.onclick = () => {
-        document.querySelectorAll('#communities-list > div').forEach(c => {
-          c.style.background = '#f9f9f9';
-        });
-        card.style.background = '#e3f2fd';
+      card.onmouseover = () => {
+        card.style.background = '#e8f5e9';
+        communitiesNetwork.selectNodes([comm.id]);
+      };
+      card.onmouseout = () => {
+        card.style.background = '#f9f9f9';
+        communitiesNetwork.unselectAll();
       };
 
       commList.appendChild(card);
+    });
+
+    communitiesNetwork.once("stabilizationIterationsDone", () => {
+      communitiesNetwork.setOptions({physics: {enabled: false}});
+      communitiesNetwork.fit({animation: false});
     });
   };
 
