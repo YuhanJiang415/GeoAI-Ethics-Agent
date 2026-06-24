@@ -56,9 +56,25 @@ def main(full=False, graph_path=None, out_path=None):
         raise SystemExit(f"Graph not found: {graph}")
     G = nx.read_graphml(graph)
 
+    # merge + hierarchy provenance, so the viz can show what collapsed into what
+    art = os.path.join(ROOT, "artifacts")
+    merged_from = {}
+    res_path = os.path.join(art, "entity_resolution.json")
+    if os.path.exists(res_path):
+        for entry in json.load(open(res_path, encoding="utf-8")):
+            for g in entry.get("decision_groups", []):
+                mem, canon = g.get("members", []), g.get("canonical")
+                if len(mem) > 1:
+                    merged_from[canon] = [m for m in mem if m != canon]
+    concept_of = {}
+    hier_path = os.path.join(art, "hierarchy.json")
+    if os.path.exists(hier_path):
+        for h in json.load(open(hier_path, encoding="utf-8")):
+            concept_of[h["child"]] = h["parent"]
+
     nodes = []
     for n, d in G.nodes(data=True):
-        nodes.append({
+        nd = {
             "id": n,
             "label": d.get("label", n),
             "type": d.get("type", "Unknown"),
@@ -67,7 +83,12 @@ def main(full=False, graph_path=None, out_path=None):
             "degree": int(G.degree(n)),
             "indeg": int(G.in_degree(n)),
             "outdeg": int(G.out_degree(n)),
-        })
+        }
+        if merged_from.get(n):
+            nd["merged_from"] = merged_from[n]
+        if concept_of.get(n):
+            nd["concept"] = concept_of[n]
+        nodes.append(nd)
 
     edges = []
     for u, v, d in G.edges(data=True):
@@ -86,6 +107,7 @@ def main(full=False, graph_path=None, out_path=None):
     stats = {
         "nodes": G.number_of_nodes(),
         "edges": G.number_of_edges(),
+        "merged_nodes": sum(1 for nd in nodes if nd.get("merged_from")),
         "by_type": dict(Counter(nd["type"] for nd in nodes)),
         "by_relation": dict(Counter(e["relation"] for e in edges)),
         "by_harm": dict(Counter(nd["harm_family"] for nd in nodes if nd["harm_family"])),
