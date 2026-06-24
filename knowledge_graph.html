@@ -6,6 +6,7 @@
 <title>GeoAI Ethics Knowledge Graph</title>
 <script src="lib/vis-network.min.js"></script>
 <script src="graph_data.js"></script>
+<script src="communities_data.js"></script>
 <style>
   :root{
     --bg:#f6f8fb; --panel:#ffffff; --panel2:#eef1f6; --line:#dfe3ea;
@@ -86,16 +87,28 @@
     border:1px solid #f3b4b4;border-radius:10px;padding:12px 14px;font-size:13px;display:none}
   .nav{padding:10px 16px;border-top:1px solid var(--line);font-size:11px}
   .nav a{color:var(--acc);text-decoration:none}
+  /* ---- tabs ---- */
+  .tabs{display:flex;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);
+    font-size:12px;font-weight:500}
+  .tab{padding:6px 12px;border-radius:6px;cursor:pointer;color:var(--mut);
+    background:transparent;border:none}
+  .tab.active{background:var(--acc);color:white}
+  .tab:hover{background:var(--panel2)}
 </style>
 </head>
 <body>
 <div id="app">
   <aside id="rail">
     <h1>GeoAI Ethics&nbsp;· Knowledge Graph</h1>
-    <div class="sub">Causal ontology distilled from 28 GeoAI-ethics papers.
-      Drag nodes to explore · click a node or edge for details.</div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchView('graph')">📊 Graph</button>
+      <button class="tab" onclick="switchView('communities')">🏘️ Communities</button>
+    </div>
+    <div id="graph-view">
+      <div class="sub">Causal ontology distilled from 28 GeoAI-ethics papers.
+        Drag nodes to explore · click a node or edge for details.</div>
 
-    <div class="sec">
+      <div class="sec">
       <h2>Corpus</h2>
       <div class="stat-grid">
         <div class="stat"><div class="n" id="s-nodes">–</div><div class="l">nodes</div></div>
@@ -118,13 +131,20 @@
       <div id="harm-stats"></div>
     </div>
 
-    <div class="sec">
-      <h2>Find a node</h2>
-      <input id="search" placeholder="type, then Enter…" autocomplete="off"/>
-      <div class="btns">
-        <button id="btn-fit">Fit view</button>
-        <button id="btn-physics">Pause physics</button>
+      <div class="sec">
+        <h2>Find a node</h2>
+        <input id="search" placeholder="type, then Enter…" autocomplete="off"/>
+        <div class="btns">
+          <button id="btn-fit">Fit view</button>
+          <button id="btn-physics">Pause physics</button>
+        </div>
       </div>
+    </div>
+
+    <div id="communities-view" style="display:none;overflow-y:auto;flex:1">
+      <div class="sub">94 ethical risk communities detected by Louvain algorithm.
+        Click a community to explore its structure and key nodes.</div>
+      <div id="communities-list"></div>
     </div>
 
     <div class="nav">↩ <a href="index.html">Overview</a> &nbsp;·&nbsp; <a href="workflow.html">Workflow</a> &nbsp;·&nbsp; <a href="example.html">Example</a></div>
@@ -154,6 +174,26 @@
 /* ---- helpers (declared first so the code below can use them) ---- */
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function cssEsc(s){return String(s).replace(/['\\]/g,"\\$&");}
+let communitiesNetwork = null;
+function switchView(view){
+  const tabs = document.querySelectorAll('.tab');
+  tabs.forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+
+  const graphView = document.getElementById('graph-view');
+  const commView = document.getElementById('communities-view');
+
+  if(view === 'graph'){
+    graphView.style.display = 'block';
+    commView.style.display = 'none';
+    setTimeout(() => { window._net.redraw(); window._net.fit({animation:false}); }, 100);
+  } else {
+    graphView.style.display = 'none';
+    commView.style.display = 'block';
+    if(!communitiesNetwork) initCommunitiesNetwork();
+    setTimeout(() => { if(communitiesNetwork) communitiesNetwork.redraw(); }, 100);
+  }
+}
 function wrap(s,n){
   s=String(s);const words=s.split(" ");let line="",out=[];
   for(const w of words){if((line+" "+w).trim().length>n){out.push(line.trim());line=w;}else line+=" "+w;}
@@ -327,6 +367,58 @@ try{
   // belt-and-braces: make sure the canvas sizes to its box and the graph is framed
   setTimeout(()=>{net.redraw();net.fit({animation:false});},400);
   window.addEventListener("resize",()=>net.fit({animation:false}));
+
+  /* ---- communities view initialization ---- */
+  window.initCommunitiesNetwork = function(){
+    if(typeof window.COMMUNITIES_DATA === "undefined"){
+      fail("communities_data.js failed to load");
+      return;
+    }
+
+    const C = window.COMMUNITIES_DATA;
+    const commList = document.getElementById("communities-list");
+    commList.innerHTML = "";
+
+    const harmColorMap = {
+      'PrivacyViolation': '#ff6b6b',
+      'EqualRightsViolation': '#ffa94d',
+      'PhysicalHarm': '#ff8787',
+      'EconomicLoss': '#ffb74d',
+      'PsychologicalHarm': '#ba68c8',
+    };
+
+    C.nodes.forEach(comm => {
+      const card = document.createElement("div");
+      card.style.cssText = "background:#f9f9f9;border:1px solid #ddd;border-left:4px solid " +
+        (harmColorMap[Object.keys(C.nodes[comm.id].harm || {})[0]] || '#ccc') +
+        ";padding:10px;border-radius:4px;margin-bottom:8px;cursor:pointer;font-size:12px";
+
+      const harmText = comm.title ? comm.title.split('Harm: ')[1] || 'Unknown' : 'Unknown';
+      card.innerHTML = `
+        <strong style="color:#2563eb">Community ${comm.id}</strong>
+        <div style="color:#666;margin-top:3px">
+          ${comm.label.replace(/\n/g, ' ')}
+        </div>
+        <div style="color:#999;font-size:11px;margin-top:5px">
+          📍 ${comm.size || 0} nodes · 🔗 ~${Math.round((comm.size||1)*0.8)} edges
+        </div>
+        <div style="margin-top:5px">
+          <span style="display:inline-block;background:#ff6b6b;color:white;padding:2px 6px;border-radius:3px;font-size:10px">
+            ${harmText.split('\n')[0]}
+          </span>
+        </div>
+      `;
+
+      card.onclick = () => {
+        document.querySelectorAll('#communities-list > div').forEach(c => {
+          c.style.background = '#f9f9f9';
+        });
+        card.style.background = '#e3f2fd';
+      };
+
+      commList.appendChild(card);
+    });
+  };
 
 }catch(err){ fail(err.message||String(err)); console.error(err); }
 </script>
