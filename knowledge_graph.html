@@ -33,6 +33,7 @@
     padding:5px 6px;border-radius:6px;cursor:pointer;user-select:none}
   .legend-row:hover{background:var(--panel2)}
   .legend-row.off{opacity:.4}
+  .legend-row.on{background:var(--panel2);box-shadow:inset 3px 0 0 var(--acc)}
   .dot{width:12px;height:12px;border-radius:50%;flex:0 0 auto}
   .legend-row .ct{margin-left:auto;color:var(--mut);font-variant-numeric:tabular-nums}
   #search{width:100%;background:var(--panel2);border:1px solid var(--line);
@@ -101,7 +102,7 @@
     <h1>GeoAI Ethics&nbsp;· Knowledge Graph</h1>
     <div id="graph-view">
       <div class="sub">Causal ontology distilled from 28 GeoAI-ethics papers.
-        Drag to explore · <b style="color:#0b1020">dark-ringed nodes</b> were merged from several surface forms (click to see which).
+        Drag to explore · <b style="color:#a16207">gold-ringed nodes</b> were merged from several surface forms (click to see which).
         Dashed grey links are <b>IS_A</b> — impacts roll up to 5 harm-category hubs (▪).</div>
 
       <div class="sec">
@@ -115,6 +116,10 @@
     <div class="sec">
       <h2>Node types <span style="color:var(--mut);font-weight:400;text-transform:none;letter-spacing:0">(click to toggle)</span></h2>
       <div id="legend"></div>
+      <div style="font-size:11px;color:var(--mut);margin-top:10px;line-height:1.9">
+        ● instance &nbsp; ▲ concept (parent) &nbsp; ■ harm category<br>
+        <span style="color:#a16207;font-weight:600">◯ gold ring</span> = merged node
+      </div>
     </div>
 
     <div class="sec">
@@ -123,7 +128,7 @@
     </div>
 
     <div class="sec">
-      <h2>Harm families (on EthicalImpact)</h2>
+      <h2>Harm families <span style="color:var(--mut);font-weight:400;text-transform:none;letter-spacing:0">(click to highlight cluster)</span></h2>
       <div id="harm-stats"></div>
     </div>
 
@@ -149,7 +154,7 @@
   <div id="stage">
     <div id="net"></div>
     <div id="err"></div>
-    <div class="hint" id="hint">scroll = zoom · drag canvas = pan · dark ring = merged node</div>
+    <div class="hint" id="hint">scroll = zoom · drag canvas = pan · gold ring = merged node</div>
     <div id="detail">
       <div class="hd">
         <span class="x" onclick="closeDetail()">✕</span>
@@ -195,11 +200,11 @@ try{
   const nodes = new vis.DataSet(D.nodes.map(n=>{
     const merged = n.merged_from && n.merged_from.length;
     return {
-    id:n.id, label:wrap(n.label,22), _raw:n, shape:n.type==="HarmCategory"?"square":"dot", level:n.level,
+    id:n.id, label:wrap(n.label,22), _raw:n, shape:n.type==="HarmCategory"?"square":(n.is_concept?"triangle":"dot"), level:n.level,
     size: 8 + 22*Math.sqrt(n.degree/degMax),
-    borderWidth: merged?4:2,
-    color:{background:(TYPE[n.type]||TYPE.Unknown).c, border: merged?"#0b1020":"#ffffff",
-           highlight:{background:(TYPE[n.type]||TYPE.Unknown).c,border: merged?"#0b1020":"#1f2733"}},
+    borderWidth: merged?3:2,
+    color:{background:(TYPE[n.type]||TYPE.Unknown).c, border: merged?"#a16207":"#ffffff",
+           highlight:{background:(TYPE[n.type]||TYPE.Unknown).c,border: merged?"#a16207":"#1f2733"}},
     font:{color:"#374151",size:12,face:"-apple-system",strokeWidth:4,strokeColor:"#ffffff"}
     };
   }));
@@ -245,7 +250,20 @@ try{
   });
 
   renderBars("rel-stats", D.stats.by_relation, r=>REL_COLOR[r]||"#94a3b8");
-  renderBars("harm-stats", D.stats.by_harm, ()=>getCSS('--ei'));
+  const HARM_C={PrivacyViolation:"#ff6b6b",EqualRightsViolation:"#ffa94d",PhysicalHarm:"#ff8787",EconomicLoss:"#eab308",PsychologicalHarm:"#ba68c8"};
+  (function renderHarm(){
+    const host=document.getElementById("harm-stats"); let active=null;
+    Object.entries(D.stats.by_harm).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{
+      const row=document.createElement("div"); row.className="legend-row";
+      row.innerHTML=`<span class="dot" style="background:${HARM_C[k]||getCSS('--ei')}"></span><span>${esc(k)}</span><span class="ct">${v}</span>`;
+      row.onclick=()=>{
+        host.querySelectorAll(".legend-row").forEach(r=>r.classList.remove("on"));
+        if(active===k){ active=null; clearHighlight(); }
+        else { active=k; row.classList.add("on"); highlightCluster(k); }
+      };
+      host.appendChild(row);
+    });
+  })();
   function renderBars(id, obj, colorFn){
     const host=document.getElementById(id);
     const tot=Object.values(obj).reduce((a,b)=>a+b,0)||1;
@@ -286,8 +304,8 @@ try{
         <span class="chip">degree ${n.degree}</span><span class="chip">in ${n.indeg}</span><span class="chip">out ${n.outdeg}</span></div>`;
     if(n.harm_family) body+=`<div class="field"><div class="lbl">Harm family</div>
         <span class="chip" style="border-color:${getCSS('--ei')};color:${getCSS('--ei')}">${esc(n.harm_family)}</span></div>`;
-    if(n.merged_from && n.merged_from.length) body+=`<div class="field"><div class="lbl" style="color:#0b1020">⬤ Merged from ${n.merged_from.length} surface form(s)</div>
-        ${n.merged_from.map(m=>`<span class="chip" style="border-color:#0b1020">${esc(m)}</span>`).join("")}</div>`;
+    if(n.merged_from && n.merged_from.length) body+=`<div class="field"><div class="lbl" style="color:#a16207">⬤ Merged from ${n.merged_from.length} surface form(s)</div>
+        ${n.merged_from.map(m=>`<span class="chip" style="border-color:#a16207">${esc(m)}</span>`).join("")}</div>`;
     if(n.concept) body+=`<div class="field"><div class="lbl">Rolls up to concept</div>
         <span class="chip">${esc(n.concept)}</span></div>`;
     body+=`<div class="field"><div class="lbl">Causal links (${conn.length})</div>`;
@@ -331,6 +349,14 @@ try{
       nodes.update({id:n.id,opacity:nb.has(n.id)?1:0.2}); });
   }
   function clearHighlight(){nodes.forEach(n=>nodes.update({id:n.id,opacity:1}));}
+  function highlightCluster(family){
+    const m=new Set(); m.add("harm:"+family);
+    D.nodes.forEach(n=>{ if(n.harm_family===family && n.type!=="HarmCategory") m.add(n.id); });
+    D.edges.forEach(e=>{ if(m.has(e.from)) m.add(e.to); if(m.has(e.to)) m.add(e.from); });   // 1-hop drivers
+    nodes.forEach(n=>nodes.update({id:n.id,opacity:m.has(n.id)?1:0.1}));
+    net.unselectAll(); document.getElementById("detail").classList.remove("show");
+    net.fit({nodes:[...m].filter(id=>nodes.get(id)),animation:true});
+  }
   window.closeDetail=function(){document.getElementById("detail").classList.remove("show");
     net.unselectAll();clearHighlight();};
   window.focusNode=function(id){net.focus(id,{scale:1.1,animation:true});showNode(id);};
@@ -357,7 +383,7 @@ try{
   };
   net.once("stabilizationIterationsDone",()=>{net.setOptions({physics:{enabled:false}});
     physicsOn=false;pb.textContent="Resume physics";net.fit({animation:false});
-    document.getElementById("hint").textContent="layout settled · drag nodes freely · dark ring = merged";});
+    document.getElementById("hint").textContent="layout settled · drag nodes freely · gold ring = merged";});
   setTimeout(()=>{net.redraw();net.fit({animation:false});},400);
   window.addEventListener("resize",()=>net.fit({animation:false}));
 

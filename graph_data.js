@@ -16,11 +16,11 @@ window.GRAPH_DATA = {
    "INHIBITS": 43
   },
   "by_harm": {
-   "PhysicalHarm": 14,
-   "PrivacyViolation": 14,
-   "EqualRightsViolation": 43,
-   "PsychologicalHarm": 4,
-   "EconomicLoss": 10
+   "PhysicalHarm": 13,
+   "PrivacyViolation": 13,
+   "EqualRightsViolation": 42,
+   "PsychologicalHarm": 3,
+   "EconomicLoss": 9
   },
   "top_degree": [
    {
@@ -194,7 +194,8 @@ window.GRAPH_DATA = {
     "violation of geospatial data privacy and sensitivity",
     "violation of location privacy"
    ],
-   "concept": "privacy violation"
+   "concept": "privacy violation",
+   "is_concept": true
   },
   {
    "id": "black-box nature of deep neural networks",
@@ -285,7 +286,8 @@ window.GRAPH_DATA = {
     "discrimination against vulnerable communities",
     "discrimination and unfair treatment of social groups",
     "systematic discrimination of individuals or population sub-groups"
-   ]
+   ],
+   "is_concept": true
   },
   {
    "id": "high-resolution uav imagery",
@@ -549,7 +551,8 @@ window.GRAPH_DATA = {
     "geographic representational imbalance",
     "representation bias in spatial data coverage"
    ],
-   "concept": "spatial data bias"
+   "concept": "spatial data bias",
+   "is_concept": true
   },
   {
    "id": "unequal quality of geoparsing services across geographic regions",
@@ -641,7 +644,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 4,
    "indeg": 1,
-   "outdeg": 3
+   "outdeg": 3,
+   "is_concept": true
   },
   {
    "id": "biased model predictions and rankings",
@@ -1618,7 +1622,8 @@ window.GRAPH_DATA = {
     "infringement on personal privacy",
     "loss of privacy",
     "potential privacy risks"
-   ]
+   ],
+   "is_concept": true
   },
   {
    "id": "data protection impact assessments dpia",
@@ -1669,7 +1674,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 6,
    "indeg": 2,
-   "outdeg": 4
+   "outdeg": 4,
+   "is_concept": true
   },
   {
    "id": "discriminatory resource allocation",
@@ -1928,7 +1934,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 5,
    "indeg": 2,
-   "outdeg": 3
+   "outdeg": 3,
+   "is_concept": true
   },
   {
    "id": "risks of artificial intelligence",
@@ -2990,7 +2997,8 @@ window.GRAPH_DATA = {
    "degree": 5,
    "indeg": 3,
    "outdeg": 2,
-   "concept": "law enforcement inequity"
+   "concept": "law enforcement inequity",
+   "is_concept": true
   },
   {
    "id": "travel booking recommendation algorithms",
@@ -3083,7 +3091,8 @@ window.GRAPH_DATA = {
    "harm_family": "EqualRightsViolation",
    "degree": 5,
    "indeg": 4,
-   "outdeg": 1
+   "outdeg": 1,
+   "is_concept": true
   },
   {
    "id": "ai reflection of specific geopolitical identities",
@@ -3183,7 +3192,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 6,
    "indeg": 2,
-   "outdeg": 4
+   "outdeg": 4,
+   "is_concept": true
   },
   {
    "id": "informal settlement mapping",
@@ -3193,7 +3203,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 4,
    "indeg": 2,
-   "outdeg": 2
+   "outdeg": 2,
+   "is_concept": true
   },
   {
    "id": "mobile location tracking",
@@ -3203,7 +3214,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 5,
    "indeg": 3,
-   "outdeg": 2
+   "outdeg": 2,
+   "is_concept": true
   },
   {
    "id": "GeoAI data processing",
@@ -3213,7 +3225,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 2,
    "indeg": 1,
-   "outdeg": 1
+   "outdeg": 1,
+   "is_concept": true
   },
   {
    "id": "GeoAI applications",
@@ -3223,7 +3236,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 2,
    "indeg": 1,
-   "outdeg": 1
+   "outdeg": 1,
+   "is_concept": true
   },
   {
    "id": "GeoAI modeling",
@@ -3233,7 +3247,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 4,
    "indeg": 2,
-   "outdeg": 2
+   "outdeg": 2,
+   "is_concept": true
   },
   {
    "id": "GeoAI model development",
@@ -3243,7 +3258,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 2,
    "indeg": 1,
-   "outdeg": 1
+   "outdeg": 1,
+   "is_concept": true
   },
   {
    "id": "computer vision",
@@ -3253,7 +3269,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 3,
    "indeg": 1,
-   "outdeg": 2
+   "outdeg": 2,
+   "is_concept": true
   },
   {
    "id": "GeoAI technologies",
@@ -3263,7 +3280,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 6,
    "indeg": 3,
-   "outdeg": 3
+   "outdeg": 3,
+   "is_concept": true
   },
   {
    "id": "predictive policing",
@@ -3273,7 +3291,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 7,
    "indeg": 3,
-   "outdeg": 4
+   "outdeg": 4,
+   "is_concept": true
   },
   {
    "id": "geoai models",
@@ -3283,7 +3302,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 4,
    "indeg": 2,
-   "outdeg": 2
+   "outdeg": 2,
+   "is_concept": true
   },
   {
    "id": "geospatial data processing",
@@ -3293,7 +3313,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 2,
    "indeg": 1,
-   "outdeg": 1
+   "outdeg": 1,
+   "is_concept": true
   },
   {
    "id": "geospatial data features",
@@ -3303,7 +3324,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 2,
    "indeg": 1,
-   "outdeg": 1
+   "outdeg": 1,
+   "is_concept": true
   },
   {
    "id": "training data quality",
@@ -3313,7 +3335,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 4,
    "indeg": 2,
-   "outdeg": 2
+   "outdeg": 2,
+   "is_concept": true
   },
   {
    "id": "misuse of spatial data",
@@ -3323,7 +3346,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 3,
    "indeg": 2,
-   "outdeg": 1
+   "outdeg": 1,
+   "is_concept": true
   },
   {
    "id": "algorithmic opacity",
@@ -3333,7 +3357,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 4,
    "indeg": 3,
-   "outdeg": 1
+   "outdeg": 1,
+   "is_concept": true
   },
   {
    "id": "algorithmic discrimination",
@@ -3343,7 +3368,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 6,
    "indeg": 4,
-   "outdeg": 2
+   "outdeg": 2,
+   "is_concept": true
   },
   {
    "id": "information disclosure",
@@ -3353,7 +3379,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 5,
    "indeg": 3,
-   "outdeg": 2
+   "outdeg": 2,
+   "is_concept": true
   },
   {
    "id": "Social stigmatization",
@@ -3363,7 +3390,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 6,
    "indeg": 4,
-   "outdeg": 2
+   "outdeg": 2,
+   "is_concept": true
   },
   {
    "id": "surveillance and tracking",
@@ -3373,7 +3401,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 11,
    "indeg": 8,
-   "outdeg": 3
+   "outdeg": 3,
+   "is_concept": true
   },
   {
    "id": "algorithmic bias",
@@ -3383,7 +3412,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 17,
    "indeg": 13,
-   "outdeg": 4
+   "outdeg": 4,
+   "is_concept": true
   },
   {
    "id": "spatial data bias",
@@ -3393,7 +3423,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 5,
    "indeg": 3,
-   "outdeg": 2
+   "outdeg": 2,
+   "is_concept": true
   },
   {
    "id": "re-identification risk",
@@ -3403,7 +3434,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 10,
    "indeg": 8,
-   "outdeg": 2
+   "outdeg": 2,
+   "is_concept": true
   },
   {
    "id": "environmental impact",
@@ -3413,7 +3445,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 8,
    "indeg": 6,
-   "outdeg": 2
+   "outdeg": 2,
+   "is_concept": true
   },
   {
    "id": "bias and unfairness",
@@ -3423,7 +3456,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 6,
    "indeg": 4,
-   "outdeg": 2
+   "outdeg": 2,
+   "is_concept": true
   },
   {
    "id": "fundamental rights violation",
@@ -3433,7 +3467,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 11,
    "indeg": 11,
-   "outdeg": 0
+   "outdeg": 0,
+   "is_concept": true
   },
   {
    "id": "population bias",
@@ -3443,7 +3478,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 4,
    "indeg": 3,
-   "outdeg": 1
+   "outdeg": 1,
+   "is_concept": true
   },
   {
    "id": "bias",
@@ -3453,7 +3489,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 6,
    "indeg": 4,
-   "outdeg": 2
+   "outdeg": 2,
+   "is_concept": true
   },
   {
    "id": "vulnerable population risk",
@@ -3463,7 +3500,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 6,
    "indeg": 4,
-   "outdeg": 2
+   "outdeg": 2,
+   "is_concept": true
   },
   {
    "id": "geographic misunderstanding",
@@ -3473,7 +3511,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 5,
    "indeg": 4,
-   "outdeg": 1
+   "outdeg": 1,
+   "is_concept": true
   },
   {
    "id": "criminal misidentification",
@@ -3483,7 +3522,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 5,
    "indeg": 3,
-   "outdeg": 2
+   "outdeg": 2,
+   "is_concept": true
   },
   {
    "id": "system safety",
@@ -3493,7 +3533,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 3,
    "indeg": 3,
-   "outdeg": 0
+   "outdeg": 0,
+   "is_concept": true
   },
   {
    "id": "forced displacement",
@@ -3503,7 +3544,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 3,
    "indeg": 3,
-   "outdeg": 0
+   "outdeg": 0,
+   "is_concept": true
   },
   {
    "id": "marginalization and exclusion",
@@ -3513,7 +3555,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 4,
    "indeg": 4,
-   "outdeg": 0
+   "outdeg": 0,
+   "is_concept": true
   },
   {
    "id": "social inequity",
@@ -3523,7 +3566,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 7,
    "indeg": 7,
-   "outdeg": 0
+   "outdeg": 0,
+   "is_concept": true
   },
   {
    "id": "geospatial discrimination",
@@ -3533,7 +3577,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 5,
    "indeg": 5,
-   "outdeg": 0
+   "outdeg": 0,
+   "is_concept": true
   },
   {
    "id": "stigmatization",
@@ -3543,7 +3588,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 4,
    "indeg": 4,
-   "outdeg": 0
+   "outdeg": 0,
+   "is_concept": true
   },
   {
    "id": "environmental injustice",
@@ -3553,7 +3599,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 2,
    "indeg": 2,
-   "outdeg": 0
+   "outdeg": 0,
+   "is_concept": true
   },
   {
    "id": "spatial injustice",
@@ -3563,7 +3610,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 4,
    "indeg": 4,
-   "outdeg": 0
+   "outdeg": 0,
+   "is_concept": true
   },
   {
    "id": "harm to vulnerable populations",
@@ -3573,7 +3621,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 4,
    "indeg": 4,
-   "outdeg": 0
+   "outdeg": 0,
+   "is_concept": true
   },
   {
    "id": "resource allocation inequality",
@@ -3583,7 +3632,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 10,
    "indeg": 10,
-   "outdeg": 0
+   "outdeg": 0,
+   "is_concept": true
   },
   {
    "id": "inequitable resource distribution",
@@ -3593,7 +3643,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 2,
    "indeg": 2,
-   "outdeg": 0
+   "outdeg": 0,
+   "is_concept": true
   },
   {
    "id": "policy-level harm",
@@ -3603,7 +3654,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 4,
    "indeg": 4,
-   "outdeg": 0
+   "outdeg": 0,
+   "is_concept": true
   },
   {
    "id": "law enforcement inequity",
@@ -3613,7 +3665,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 5,
    "indeg": 5,
-   "outdeg": 0
+   "outdeg": 0,
+   "is_concept": true
   },
   {
    "id": "economic loss",
@@ -3623,7 +3676,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 4,
    "indeg": 4,
-   "outdeg": 0
+   "outdeg": 0,
+   "is_concept": true
   },
   {
    "id": "harm",
@@ -3633,7 +3687,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 5,
    "indeg": 5,
-   "outdeg": 0
+   "outdeg": 0,
+   "is_concept": true
   },
   {
    "id": "transparency",
@@ -3643,7 +3698,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 5,
    "indeg": 1,
-   "outdeg": 4
+   "outdeg": 4,
+   "is_concept": true
   },
   {
    "id": "Privacy by Design",
@@ -3653,7 +3709,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 4,
    "indeg": 2,
-   "outdeg": 2
+   "outdeg": 2,
+   "is_concept": true
   },
   {
    "id": "human agency and oversight",
@@ -3663,7 +3720,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 3,
    "indeg": 1,
-   "outdeg": 2
+   "outdeg": 2,
+   "is_concept": true
   },
   {
    "id": "Privacy protection methods",
@@ -3673,7 +3731,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 3,
    "indeg": 2,
-   "outdeg": 1
+   "outdeg": 1,
+   "is_concept": true
   },
   {
    "id": "geoai ethics awareness and education",
@@ -3683,7 +3742,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 4,
    "indeg": 2,
-   "outdeg": 2
+   "outdeg": 2,
+   "is_concept": true
   },
   {
    "id": "Visualization-based mitigation",
@@ -3693,7 +3753,8 @@ window.GRAPH_DATA = {
    "harm_family": "",
    "degree": 4,
    "indeg": 2,
-   "outdeg": 2
+   "outdeg": 2,
+   "is_concept": true
   }
  ],
  "edges": [

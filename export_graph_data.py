@@ -71,6 +71,7 @@ def main(full=False, graph_path=None, out_path=None):
     if os.path.exists(hier_path):
         for h in json.load(open(hier_path, encoding="utf-8")):
             concept_of[h["child"]] = h["parent"]
+    concept_parents = set(concept_of.values())   # upper / parent concept nodes
 
     nodes = []
     for n, d in G.nodes(data=True):
@@ -88,6 +89,8 @@ def main(full=False, graph_path=None, out_path=None):
             nd["merged_from"] = merged_from[n]
         if concept_of.get(n):
             nd["concept"] = concept_of[n]
+        if n in concept_parents:
+            nd["is_concept"] = True
         nodes.append(nd)
 
     edges = []
@@ -112,7 +115,7 @@ def main(full=False, graph_path=None, out_path=None):
         "merged_nodes": sum(1 for nd in nodes if nd.get("merged_from")),
         "by_type": dict(Counter(nd["type"] for nd in nodes)),
         "by_relation": dict(Counter(e["relation"] for e in edges)),
-        "by_harm": dict(Counter(nd["harm_family"] for nd in nodes if nd["harm_family"])),
+        "by_harm": dict(Counter(nd["harm_family"] for nd in nodes if nd["harm_family"] and nd["type"] != "HarmCategory")),
         "top_degree": sorted(
             [{"label": nd["label"], "type": nd["type"], "degree": nd["degree"]} for nd in nodes],
             key=lambda x: x["degree"], reverse=True)[:12],
