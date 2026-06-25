@@ -342,18 +342,26 @@ try{
     net.selectEdges([id]);
   }
 
+  const edgeRelColor=(rel)=>rel==="IS_A"?"#cbd5e1":(REL_COLOR[rel]||"#94a3b8");
+  const edgeBaseOp=(rel)=>rel==="IS_A"?0.5:0.7;
+  const setEdge=(e,op)=>edges.update({id:e.id,color:{color:edgeRelColor(e._raw.relation),opacity:op,highlight:"#1f2733"}});
   function highlightNeighbourhood(id){
     const nb=new Set([id]);
     D.edges.forEach(e=>{if(e.from===id)nb.add(e.to); if(e.to===id)nb.add(e.from);});
     nodes.forEach(n=>{ if(!active.has(n._raw.type))return;
       nodes.update({id:n.id,opacity:nb.has(n.id)?1:0.2}); });
+    edges.forEach(e=>setEdge(e, (nb.has(e._raw.from)&&nb.has(e._raw.to))?edgeBaseOp(e._raw.relation):0.05));
   }
-  function clearHighlight(){nodes.forEach(n=>nodes.update({id:n.id,opacity:1}));}
+  function clearHighlight(){
+    nodes.forEach(n=>nodes.update({id:n.id,opacity:1}));
+    edges.forEach(e=>setEdge(e, edgeBaseOp(e._raw.relation)));
+  }
   function highlightCluster(family){
     const m=new Set(); m.add("harm:"+family);
     D.nodes.forEach(n=>{ if(n.harm_family===family && n.type!=="HarmCategory") m.add(n.id); });
     D.edges.forEach(e=>{ if(m.has(e.from)) m.add(e.to); if(m.has(e.to)) m.add(e.from); });   // 1-hop drivers
-    nodes.forEach(n=>nodes.update({id:n.id,opacity:m.has(n.id)?1:0.1}));
+    nodes.forEach(n=>nodes.update({id:n.id,opacity:m.has(n.id)?1:0.08}));
+    edges.forEach(e=>setEdge(e, (m.has(e._raw.from)&&m.has(e._raw.to))?edgeBaseOp(e._raw.relation):0.03));
     net.unselectAll(); document.getElementById("detail").classList.remove("show");
     net.fit({nodes:[...m].filter(id=>nodes.get(id)),animation:true});
   }
