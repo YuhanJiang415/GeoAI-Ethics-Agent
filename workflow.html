@@ -294,11 +294,11 @@ const STAGES = {
     ds:"Streamlit auditor with XML / Text / PDF tabs.",
     body:`<p>Interactive auditor. Three tabs (XML recommended, Text, PDF). Renders the validated triples (with provenance colour + quote✓/✗), the prose report, and both tracks' evidence.</p>
       <h4>Run</h4><p>From the repo root: <code>streamlit run app.py</code></p>`},
-  bench:{ct:"entry · eval",t:"benchmark.py",file:"python -m geoai_audit.evaluation.benchmark",color:"var(--acc)",
-    ds:"Batch-audit held-out XML → graded Excel workbook.",
-    body:`<p>Runs every XML in <code>data/heldout_xml/</code> through <code>analyze_xml</code>, computes <code>C_chain</code> (structural recall, reference-free), and writes a two-sheet grading workbook.</p>
-      <h4>Outputs</h4><div class="io"><span class="chip">artifacts/eval/agent_benchmark.xlsx</span><span class="chip">artifacts/eval/agent_benchmark_raw.json</span></div>
-      <h4>Scoring</h4><p>Two layers: F/G/O/L precision (manual on TripleDetail) + C_chain structural recall (auto). <code>S_graph = 0.75·S_triple + 0.25·C_chain</code>.</p>`},
+  bench:{ct:"entry · eval",t:"Expert scoring benchmark",file:"build_benchmark_data.py · benchmark_scoring.html",color:"var(--acc)",
+    ds:"Batch-audit papers → two experts grade triples pass / fail in the browser.",
+    body:`<p>The evaluation pipeline. <code>build_benchmark_data.py</code> runs <code>analyze_xml</code> over the paper set (resumable) and writes a <b>public-safe</b> <code>benchmark_data.js</code> — title / DOI / abstract + the audit triples (incl. cited quote snippets) + Track-2 passages; <code>graph_source_docs</code> and full text are stripped.</p>
+      <h4>Scoring</h4><p>Two domain experts open <code>benchmark_scoring.html</code> and judge every triple <b>pass / fail</b> on the three axes above → <b>grounding / edge / verdict precision</b>, plus inter-rater agreement and a per-paper recall note. Ratings auto-save in the browser and export to JSON keyed by <code>&lt;doi&gt;#n</code>.</p>
+      <h4>Outputs</h4><div class="io"><span class="chip">visualization/benchmark_data.js</span><span class="chip">ratings_&lt;expert&gt;_&lt;date&gt;.json</span></div>`},
 };
 
 const GATES = {
