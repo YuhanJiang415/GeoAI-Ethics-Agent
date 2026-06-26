@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>GeoAI Ethics Auditor · Expert Scoring</title>
+<script src="benchmark_data.js"></script>
+<style>
+  :root{
+    --bg:#f6f8fb; --panel:#ffffff; --panel2:#eef1f6; --line:#dfe3ea;
+    --ink:#1f2733; --mut:#6b7480; --acc:#2563eb;
+    --tf:#16a34a; --rm:#d97706; --ei:#dc2626; --mi:#9333ea;
+    --ok:#16a34a; --warn:#d97706; --bad:#dc2626;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  a{color:var(--acc);text-decoration:none}
+
+  /* ---- top bar (sticky) ---- */
+  .topbar{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.96);
+    backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px}
+  .topbar .row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;max-width:1100px;margin:0 auto}
+  .topbar h1{font-size:15px;margin:0;font-weight:700;white-space:nowrap}
+  .topbar input[type=text]{font-size:13px;padding:6px 10px;border:1px solid var(--line);
+    border-radius:7px;background:var(--panel);min-width:160px}
+  .btn{font-size:12.5px;font-weight:600;padding:6px 12px;border:1px solid var(--line);
+    border-radius:7px;background:var(--panel);color:var(--ink);cursor:pointer}
+  .btn:hover{border-color:var(--acc);color:var(--acc)}
+  .btn.primary{background:var(--acc);color:#fff;border-color:var(--acc)}
+  .btn.primary:hover{background:#1d4ed8;color:#fff}
+  .grow{flex:1}
+  .prog{font-size:12.5px;color:var(--mut);white-space:nowrap}
+  .prog b{color:var(--ink)}
+  .tally{display:flex;gap:6px;flex-wrap:wrap;max-width:1100px;margin:8px auto 0}
+  .tchip{font-size:10.5px;border:1px solid var(--line);border-radius:6px;padding:2px 8px;
+    background:var(--panel2);color:var(--mut)}
+  .tchip b{color:var(--ink)}
+
+  .wrap{max-width:1100px;margin:0 auto;padding:18px 20px 90px;display:grid;
+    grid-template-columns:230px 1fr;gap:22px}
+  @media(max-width:820px){.wrap{grid-template-columns:1fr}}
+
+  /* ---- paper navigator ---- */
+  .nav{position:sticky;top:96px;align-self:start;max-height:calc(100vh - 120px);overflow:auto;
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px}
+  .nav .navhd{font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--mut);
+    padding:6px 8px}
+  .pitem{display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:7px;cursor:pointer;
+    font-size:12px;line-height:1.3}
+  .pitem:hover{background:var(--panel2)}
+  .pitem.active{background:#eef4ff;outline:1px solid var(--acc)}
+  .pitem .pi-id{font-family:ui-monospace,Menlo,monospace;color:var(--mut);font-size:11px}
+  .pitem .pi-ti{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pi-badge{font-size:10px;font-weight:700;border-radius:10px;padding:1px 7px;border:1px solid var(--line);
+    background:var(--panel2);color:var(--mut);white-space:nowrap}
+  .pi-badge.done{background:#f0fdf4;border-color:var(--ok);color:var(--ok)}
+  .pi-badge.part{background:#fffbeb;border-color:var(--warn);color:var(--warn)}
+
+  /* ---- main panel ---- */
+  .main{min-width:0}
+  .pnav{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .pnav .ptitle{flex:1;font-size:18px;font-weight:700;line-height:1.35;min-width:0}
+
+  .src-chips{margin:8px 0 12px;display:flex;gap:8px;flex-wrap:wrap}
+  .src-chips .chip{font-size:11.5px;border:1px solid var(--line);border-radius:6px;padding:3px 10px;
+    background:var(--panel2);color:var(--ink)}
+  .src-chips a.chip.doi{border-color:var(--acc);color:var(--acc)}
+  details.box{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin-bottom:12px}
+  details.box>summary{cursor:pointer;padding:10px 14px;font-size:12.5px;color:var(--mut);
+    user-select:none;font-weight:600}
+  details.box .bd{padding:0 14px 14px;font-size:13px;line-height:1.62;color:#334155}
+  details.box .bd p{margin:0 0 11px}
+
+  .sectitle{font-size:12px;text-transform:uppercase;letter-spacing:.7px;color:var(--mut);
+    margin:18px 0 12px;display:flex;align-items:center;gap:10px}
+  .sectitle::after{content:"";flex:1;height:1px;background:var(--line)}
+
+  /* ---- triples (reused from example.html) ---- */
+  .chain{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:16px;overflow:hidden}
+  .chain .ch-hd{background:var(--panel2);padding:9px 16px;font-size:11px;color:var(--mut);
+    display:flex;align-items:center;gap:8px;letter-spacing:.4px;border-bottom:1px solid var(--line)}
+  .triple{padding:15px 16px;border-bottom:1px solid var(--line)}
+  .triple:last-child{border-bottom:none}
+  .flow{display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:13.5px}
+  .ent{padding:5px 11px;border-radius:8px;font-weight:600;border:1px solid;display:inline-flex;flex-direction:column;line-height:1.2}
+  .ent .ty{font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;opacity:.85;margin-bottom:1px}
+  .rel{display:inline-flex;flex-direction:column;align-items:center;color:var(--mut);font-size:10px}
+  .rel .rname{font-weight:700;letter-spacing:.4px;color:#475569}
+  .rel .ar{font-size:15px;line-height:.8;color:#94a3b8}
+  .badges{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}
+  .b{font-size:10.5px;font-weight:600;border-radius:6px;padding:3px 9px;border:1px solid}
+  .b.harm{color:var(--ei);border-color:var(--ei);background:#fef2f2}
+  .b.prov-graph_exact{color:var(--ok);border-color:var(--ok);background:#f0fdf4}
+  .b.prov-graph_anchored{color:var(--warn);border-color:var(--warn);background:#fffbeb}
+  .b.prov-inferred{color:var(--bad);border-color:var(--bad);background:#fef2f2}
+  .b.qok{color:var(--ok);border-color:var(--ok);background:#f0fdf4}
+  .b.qno{color:var(--bad);border-color:var(--bad);background:#fef2f2}
+  .b.inst-INSTANTIATED{color:#fff;background:var(--bad);border-color:var(--bad)}
+  .b.inst-POTENTIAL{color:var(--warn);border-color:var(--warn);background:#fffbeb}
+  .b.inst-NOT_TRIGGERED{color:var(--mut);border-color:var(--line);background:var(--panel2)}
+  .meta-line{font-size:12px;color:var(--mut);margin-top:10px;line-height:1.55}
+  .meta-line .k{color:#475569;font-weight:600}
+  .quote{margin-top:7px;font-size:12.5px;border-left:3px solid var(--line);padding:3px 0 3px 11px;color:#334155}
+
+  /* ---- scoring row ---- */
+  .score{margin-top:13px;border-top:1px dashed var(--line);padding-top:12px}
+  .axes{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+  .axis{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:9px 11px}
+  .axis .ax-h{font-size:11.5px;font-weight:700;color:#334155}
+  .axis .ax-d{font-size:10.5px;color:var(--mut);line-height:1.45;margin:3px 0 8px}
+  .toggle{display:flex;gap:6px}
+  .toggle button{flex:1;font-size:11.5px;font-weight:700;padding:5px 0;border:1px solid var(--line);
+    border-radius:6px;background:var(--panel);color:var(--mut);cursor:pointer}
+  .toggle button.pass.on{background:var(--ok);border-color:var(--ok);color:#fff}
+  .toggle button.fail.on{background:var(--bad);border-color:var(--bad);color:#fff}
+  .toggle button:hover{border-color:var(--acc)}
+  .cmt{margin-top:9px}
+  .cmt textarea{width:100%;font-family:inherit;font-size:12px;padding:7px 9px;border:1px solid var(--line);
+    border-radius:7px;background:var(--panel);resize:vertical;min-height:34px}
+  .cmt .cl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--mut);margin-bottom:3px}
+  .trow-done{box-shadow:inset 3px 0 0 var(--ok)}
+
+  .empty{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;
+    color:var(--mut);font-size:13px;line-height:1.6}
+  #err{background:#fff3f3;color:#b42318;border:1px solid #f3b4b4;border-radius:10px;padding:14px;margin:20px}
+  .notice{background:#f0f7ff;border:1px solid #cfe3fb;border-radius:10px;padding:11px 14px;font-size:12px;
+    line-height:1.55;color:#1e3a5f;margin-bottom:14px}
+  .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#1f2733;color:#fff;
+    font-size:12.5px;padding:9px 16px;border-radius:8px;opacity:0;transition:opacity .25s;z-index:50;pointer-events:none}
+  .toast.show{opacity:.95}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="row">
+    <h1>🧪 Expert scoring</h1>
+    <label class="prog">Expert:&nbsp;</label>
+    <input type="text" id="expert" placeholder="your name / id" autocomplete="off"/>
+    <span class="grow"></span>
+    <span class="prog" id="prog">—</span>
+    <button class="btn" id="importBtn">Import…</button>
+    <input type="file" id="importFile" accept="application/json" style="display:none"/>
+    <button class="btn primary" id="exportBtn">Export ratings</button>
+  </div>
+  <div class="tally" id="tally"></div>
+</div>
+
+<div id="err" style="display:none"></div>
+<div class="wrap" id="app" style="display:none">
+  <aside class="nav" id="nav"></aside>
+  <section class="main" id="main"></section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const AXES=[
+  {key:"ground", h:"1 · Groundedness", d:"Triple is really supported by the paper: the head (tech feature / data choice) is in this paper and the verbatim quote exists & supports it. Fail = hallucination / mis-attribution."},
+  {key:"causal", h:"2 · Causal validity", d:"head → relation → tail is a defensible ethical causal claim (true in the domain KG sense, not a non-sequitur). Fail = the causal link itself is wrong."},
+  {key:"typing", h:"3 · Typing & relation", d:"Both ends' ontology types (TechnicalFeature / RiskMechanism / EthicalImpact / Mitigation) and the relation direction (PROMOTES vs INHIBITS) are correct. Fail = type/direction mismatch."},
+  {key:"verdict",h:"4 · Instantiation verdict", d:"INSTANTIATED / POTENTIAL / NOT_TRIGGERED is correct for THIS paper. Fail = e.g. a 'potential' risk wrongly marked as already realized, or vice-versa."},
+];
+const TYPEC={TechnicalFeature:"--tf",RiskMechanism:"--rm",EthicalImpact:"--ei",Mitigation:"--mi"};
+const INST_LABEL={INSTANTIATED:"AUDIT FINDING",POTENTIAL:"disclosure",NOT_TRIGGERED:"not triggered"};
+function tc(t){return getComputedStyle(document.documentElement).getPropertyValue(TYPEC[t]||"--mut").trim();}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+let DATA=null, PAPERS=[], TOTAL=0, cur=0, ratings={}, expert="", saveCount=0;
+
+function lsKey(name){return "bm_ratings::"+(name||"");}
+function loadRatings(){try{return JSON.parse(localStorage.getItem(lsKey(expert))||"{}");}catch(e){return {};}}
+function persist(){localStorage.setItem(lsKey(expert),JSON.stringify(ratings));}
+
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),1900);}
+
+function isDone(r){return r&&AXES.every(a=>r[a.key]==="pass"||r[a.key]==="fail");}
+function isPartial(r){return r&&AXES.some(a=>r[a.key]==="pass"||r[a.key]==="fail")&&!isDone(r);}
+
+function paperProgress(p){let done=0;p.triples.forEach(t=>{if(isDone(ratings[t.tid]))done++;});
+  return {done,total:p.triples.length};}
+
+function renderTally(){
+  // overall completion
+  let done=0;PAPERS.forEach(p=>p.triples.forEach(t=>{if(isDone(ratings[t.tid]))done++;}));
+  document.getElementById("prog").innerHTML=`scored <b>${done}</b> / ${TOTAL} triples`;
+  // per-axis precision over rated triples
+  const host=document.getElementById("tally");
+  host.innerHTML=AXES.map(a=>{
+    let pass=0,fail=0;
+    PAPERS.forEach(p=>p.triples.forEach(t=>{const v=(ratings[t.tid]||{})[a.key];
+      if(v==="pass")pass++;else if(v==="fail")fail++;}));
+    const n=pass+fail;const pct=n?Math.round(100*pass/n):0;
+    return `<span class="tchip">${esc(a.h.split(" · ")[1])}: <b>${pass}/${n}</b>${n?` (${pct}%)`:""}</span>`;
+  }).join("");
+}
+
+function renderNav(){
+  const host=document.getElementById("nav");
+  let html=`<div class="navhd">${PAPERS.length} papers</div>`;
+  PAPERS.forEach((p,i)=>{
+    const pr=paperProgress(p);
+    const cls=pr.total&&pr.done===pr.total?"done":(pr.done?"part":"");
+    html+=`<div class="pitem ${i===cur?"active":""}" data-i="${i}">
+      <span class="pi-id">${esc(p.id)}</span>
+      <span class="pi-ti">${esc(p.source&&p.source.title||"(untitled)")}</span>
+      <span class="pi-badge ${cls}">${pr.done}/${pr.total}</span></div>`;
+  });
+  host.innerHTML=html;
+  host.querySelectorAll(".pitem").forEach(el=>el.onclick=()=>{cur=+el.dataset.i;renderAll();
+    document.getElementById("main").scrollIntoView({block:"start"});});
+}
+
+function entHTML(o){o=o||{};return `<span class="ent" style="color:${tc(o.type)};border-color:${tc(o.type)};background:${tc(o.type)}14">
+  <span class="ty">${esc(o.type||"")}</span>${esc(o.entity||"")}</span>`;}
+
+function tripleHTML(t){
+  const h=t.head||{},e=t.edge||{},ta=t.tail||{};
+  let badges=`<span class="b prov-${e.provenance}">${esc(e.provenance||"?")}</span>`+
+    `<span class="b ${e.quote_verified?"qok":"qno"}">quote ${e.quote_verified?"✓":"✗"}</span>`+
+    `<span class="b inst-${e.instantiation}">${INST_LABEL[e.instantiation]||e.instantiation||"?"}</span>`;
+  if(ta.harm_family)badges=`<span class="b harm">${esc(ta.harm_family)}</span>`+badges;
+  const cond=e.condition&&!["General","unknown",""].includes(e.condition)
+    ?`<div class="meta-line"><span class="k">condition:</span> ${esc(e.condition)}</div>`:"";
+  const ev=e.evidence?`<div class="meta-line"><span class="k">evidence:</span> ${esc(e.evidence)}</div>`:"";
+  const q=e.input_quote?`<div class="quote">“${esc(e.input_quote)}”</div>`:"";
+  const iq=e.instantiation_quote?`<div class="meta-line"><span class="k">instantiation quote:</span> “${esc(e.instantiation_quote)}”</div>`:"";
+
+  const r=ratings[t.tid]||{};
+  const axesHTML=AXES.map(a=>{
+    const v=r[a.key]||"";
+    return `<div class="axis"><div class="ax-h">${esc(a.h)}</div><div class="ax-d">${esc(a.d)}</div>
+      <div class="toggle" data-tid="${esc(t.tid)}" data-axis="${a.key}">
+        <button class="pass ${v==="pass"?"on":""}" data-v="pass">✓ Pass</button>
+        <button class="fail ${v==="fail"?"on":""}" data-v="fail">✗ Fail</button>
+      </div></div>`;
+  }).join("");
+  const note=esc(r.note||"");
+
+  return `<div class="triple ${isDone(r)?"trow-done":""}" id="row-${esc(t.tid)}">
+    <div class="flow">${entHTML(h)}
+      <span class="rel"><span class="rname">${esc(e.relation_type||"")}</span><span class="ar">▶</span></span>
+      ${entHTML(ta)}</div>
+    <div class="badges">${badges}</div>${cond}${ev}${q}${iq}
+    <div class="score"><div class="axes">${axesHTML}</div>
+      <div class="cmt"><div class="cl">comment (optional)</div>
+        <textarea data-tid="${esc(t.tid)}" placeholder="notes / reasoning…">${note}</textarea></div>
+    </div></div>`;
+}
+
+function renderMain(){
+  const p=PAPERS[cur];const s=p.source||{};
+  const doiLink=s.doi_url?`<a class="chip doi" href="${esc(s.doi_url)}" target="_blank" rel="noopener">DOI ${esc(s.doi)}</a>`:"";
+  const jr=s.journal?`<span class="chip">${esc(s.journal)}</span>`:"";
+  const yr=s.year?`<span class="chip">${esc(s.year)}</span>`:"";
+  const abs=s.abstract?`<details class="box"><summary>Abstract</summary><div class="bd">${esc(s.abstract)}</div></details>`:"";
+
+  let rep=p.report||"";const mk=rep.indexOf("\n---\nAppendix");if(mk>=0)rep=rep.slice(0,mk);
+  const repHTML=rep.trim()?`<details class="box"><summary>Agent prose report (context)</summary>
+    <div class="bd">${rep.trim().split(/\n\s*\n/).map(x=>`<p>${esc(x.trim())}</p>`).join("")}</div></details>`:"";
+
+  // group triples by chain
+  const byChain={};p.triples.forEach(t=>{(byChain[t.chain_id||"chain"]=byChain[t.chain_id||"chain"]||[]).push(t);});
+  let chains="";
+  Object.entries(byChain).forEach(([cid,steps],ci)=>{
+    chains+=`<div class="chain"><div class="ch-hd">⛓ CHAIN ${ci+1} · ${steps.length} step${steps.length>1?"s":""}</div>`+
+      steps.map(tripleHTML).join("")+`</div>`;
+  });
+  if(!p.triples.length)chains=`<div class="empty">This paper produced no triples.</div>`;
+
+  document.getElementById("main").innerHTML=
+    `<div class="pnav">
+       <button class="btn" id="prev">← Prev</button>
+       <div class="ptitle">${esc(p.id)} · ${esc(s.title||"(untitled)")}</div>
+       <button class="btn" id="next">Next →</button>
+     </div>
+     <div class="src-chips">${doiLink}${jr}${yr}<span class="chip">${p.triples.length} triples</span></div>
+     ${!expert?`<div class="notice">⚠️ Enter your name above to start — ratings are saved under that name in this browser.</div>`:""}
+     ${abs}${repHTML}
+     <div class="sectitle">Score each triple (4 axes · pass / fail)</div>
+     ${chains}`;
+
+  document.getElementById("prev").onclick=()=>{if(cur>0){cur--;renderAll();scrollTop();}};
+  document.getElementById("next").onclick=()=>{if(cur<PAPERS.length-1){cur++;renderAll();scrollTop();}};
+
+  // wire toggles
+  document.querySelectorAll(".toggle").forEach(tg=>{
+    tg.querySelectorAll("button").forEach(b=>b.onclick=()=>{
+      if(!requireExpert())return;
+      const tid=tg.dataset.tid,axis=tg.dataset.axis,v=b.dataset.v;
+      const r=ratings[tid]||(ratings[tid]={});
+      r[axis]=(r[axis]===v)?undefined:v;   // click again to clear
+      if(r[axis]===undefined)delete r[axis];
+      r.ts=Date.now();
+      save();
+      // update buttons in place
+      tg.querySelectorAll("button").forEach(x=>x.classList.toggle("on",r[x.dataset.v]===x.dataset.v));
+      document.getElementById("row-"+CSS.escape(tid)).classList.toggle("trow-done",isDone(r));
+      renderNavLight();renderTally();
+    });
+  });
+  // wire comments
+  document.querySelectorAll(".cmt textarea").forEach(ta=>{
+    ta.addEventListener("input",()=>{
+      if(!requireExpert()){ta.blur();return;}
+      const tid=ta.dataset.tid;const r=ratings[tid]||(ratings[tid]={});
+      r.note=ta.value;r.ts=Date.now();save(true);
+    });
+  });
+}
+
+function renderNavLight(){ // refresh only the active paper's badge
+  const p=PAPERS[cur];const pr=paperProgress(p);
+  const el=document.querySelector(`.pitem[data-i="${cur}"] .pi-badge`);
+  if(el){el.textContent=`${pr.done}/${pr.total}`;
+    el.className="pi-badge "+(pr.total&&pr.done===pr.total?"done":(pr.done?"part":""));}
+}
+function renderAll(){renderNav();renderMain();renderTally();}
+function scrollTop(){window.scrollTo({top:0});}
+
+let saveTimer=null;
+function save(debounce){
+  persist();
+  saveCount++;
+  if(saveCount%25===0)toast("💾 Saved locally — remember to Export a backup.");
+  if(debounce){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{},0);}
+}
+
+function requireExpert(){
+  if(expert)return true;
+  document.getElementById("expert").focus();
+  toast("Enter your name first.");
+  return false;
+}
+
+function setExpert(name){
+  expert=(name||"").trim();
+  localStorage.setItem("bm_expert",expert);
+  ratings=loadRatings();
+  renderAll();
+}
+
+// ---- export / import ----
+function doExport(){
+  if(!expert){requireExpert();return;}
+  const counts={};let done=0;
+  AXES.forEach(a=>counts[a.key]={pass:0,fail:0});
+  PAPERS.forEach(p=>p.triples.forEach(t=>{const r=ratings[t.tid]||{};
+    if(isDone(r))done++;
+    AXES.forEach(a=>{if(r[a.key]==="pass")counts[a.key].pass++;else if(r[a.key]==="fail")counts[a.key].fail++;});}));
+  const payload={
+    expert, exported:new Date().toISOString(),
+    data_generated:(DATA&&DATA.generated)||"",
+    scored_triples:done, total_triples:TOTAL, counts, ratings
+  };
+  const blob=new Blob([JSON.stringify(payload,null,1)],{type:"application/json"});
+  const a=document.createElement("a");
+  const safe=expert.replace(/[^a-z0-9_-]+/gi,"_");
+  const day=new Date().toISOString().slice(0,10);
+  a.href=URL.createObjectURL(blob);a.download=`ratings_${safe}_${day}.json`;
+  document.body.appendChild(a);a.click();a.remove();
+  toast("Exported "+a.download);
+}
+
+function doImport(file){
+  const fr=new FileReader();
+  fr.onload=()=>{
+    try{
+      const obj=JSON.parse(fr.result);
+      const incoming=obj.ratings||obj;        // accept a bare ratings map too
+      if(typeof incoming!=="object")throw new Error("no ratings object found");
+      if(obj.expert&&!expert){document.getElementById("expert").value=obj.expert;setExpert(obj.expert);}
+      let n=0;Object.entries(incoming).forEach(([tid,r])=>{ratings[tid]=Object.assign(ratings[tid]||{},r);n++;});
+      persist();renderAll();
+      toast(`Imported ${n} triple ratings`+(obj.expert?` (${obj.expert})`:""));
+    }catch(e){alert("Import failed: "+e.message);}
+  };
+  fr.readAsText(file);
+}
+
+// ---- boot ----
+try{
+  if(typeof window.BENCHMARK_DATA==="undefined")
+    throw new Error("benchmark_data.js failed to load. Run: python visualization/build_benchmark_data.py");
+  DATA=window.BENCHMARK_DATA;
+  PAPERS=DATA.papers||[];
+  TOTAL=PAPERS.reduce((s,p)=>s+(p.triples?p.triples.length:0),0);
+  if(!PAPERS.length)throw new Error("benchmark_data.js has no papers.");
+
+  document.getElementById("app").style.display="grid";
+  const ex=document.getElementById("expert");
+  ex.value=localStorage.getItem("bm_expert")||"";
+  expert=ex.value.trim();
+  ratings=loadRatings();
+  ex.addEventListener("change",()=>setExpert(ex.value));
+  ex.addEventListener("blur",()=>setExpert(ex.value));
+
+  document.getElementById("exportBtn").onclick=doExport;
+  document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
+  document.getElementById("importFile").onchange=e=>{if(e.target.files[0])doImport(e.target.files[0]);e.target.value="";};
+  window.addEventListener("keydown",e=>{
+    if(e.target.tagName==="TEXTAREA"||e.target.tagName==="INPUT")return;
+    if(e.key==="ArrowLeft"&&cur>0){cur--;renderAll();scrollTop();}
+    if(e.key==="ArrowRight"&&cur<PAPERS.length-1){cur++;renderAll();scrollTop();}
+  });
+
+  renderAll();
+}catch(err){
+  const e=document.getElementById("err");e.style.display="block";
+  e.innerHTML="<b>Could not load the benchmark.</b><br>"+esc(err.message||String(err));
+  console.error(err);
+}
+</script>
+</body>
+</html>
