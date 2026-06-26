@@ -129,8 +129,8 @@
     </div>
     <div class="topstats">
       <div class="topstat"><div class="n">28</div><div class="l">source papers</div></div>
-      <div class="topstat"><div class="n">301</div><div class="l">graph nodes</div></div>
-      <div class="topstat"><div class="n">207</div><div class="l">causal edges</div></div>
+      <div class="topstat"><div class="n">337</div><div class="l">graph nodes</div></div>
+      <div class="topstat"><div class="n">347</div><div class="l">causal edges</div></div>
       <div class="topstat"><div class="n">1107</div><div class="l">FAISS chunks</div></div>
       <div class="topstat"><div class="n">4</div><div class="l">verification gates</div></div>
     </div>
@@ -199,10 +199,10 @@
     <div class="phase-hd">
       <div class="num" style="background:var(--t2)">★</div>
       <h2>Evaluation — how the audit output is scored</h2>
-      <span class="tag">reference-free · adapted from GenRES (NAACL 2024)</span>
+      <span class="tag">reference-free · two domain experts · pass / fail</span>
     </div>
     <div class="phase-hd" style="margin:0 0 12px">
-      <h2 style="font-size:14px;color:var(--mut)">Four hand-scored dimensions (integers 1–5) on the agent's triples — click for the 5 / 3 / 1 anchors</h2>
+      <h2 style="font-size:14px;color:var(--mut)">Three expert-scored axes (pass / fail) per triple — click for the pass / fail criteria</h2>
     </div>
     <div class="gates" id="scores"></div>
     <div class="scorenote" id="score-note"></div>
@@ -239,8 +239,8 @@ const STAGES = {
       <li><b>keyword_alignment()</b> — per-type Agglomerative clustering over Gemini embeddings (cosine, threshold 0.07) canonicalizes synonymous entities.</li>
       <li><b>validate_triple()</b> — topology gate drops any edge that violates the closed ontology (TF→RM→EI etc).</li>
       <li>Repeated edges accumulate <code>weight</code>, <code>sources</code>, <code>conditions</code>, <code>evidence</code>.</li></ul>
-      <h4>Output → Track-1 data</h4><div class="io"><span class="chip">artifacts/geoai_knowledge.graphml</span></div>
-      <p style="margin-top:8px">301 nodes · 207 edges (PROMOTES 164 / INHIBITS 43).</p>`},
+      <h4>Output → Track-1 data</h4><div class="io"><span class="chip">artifacts/geoai_knowledge_merged_hier.graphml</span></div>
+      <p style="margin-top:8px">337 nodes · 347 causal edges (PROMOTES 275 / INHIBITS 72), plus a 210-edge IS_A type hierarchy.</p>`},
   vstore:{ct:"build · vectors",t:"_build_vector_store()",file:"geoai_audit/agent/audit_agent.py",color:"var(--t2)",
     ds:"Chunk PDFs + embed → FAISS index (lazy, auto-rebuilds).",
     body:`<p>Built lazily by the agent's <code>__init__</code> when the index is missing or older than the graph.</p>
@@ -320,40 +320,34 @@ const GATES = {
 };
 
 /* ---------- evaluation / scoring rubric ---------- */
-function ANC(rows){return '<div class="anc">'+rows.map(([s,t])=>
-  `<div class="r"><span class="s s${s}">${s}</span><span class="t">${t}</span></div>`).join("")+'</div>';}
+function PF(pass,fail){return '<div class="anc">'+
+  `<div class="r"><span class="s s5">✓</span><span class="t"><b>Pass.</b> ${pass}</span></div>`+
+  `<div class="r"><span class="s s1">✗</span><span class="t"><b>Fail.</b> ${fail}</span></div>`+'</div>';}
 
 const SCORES = {
-  F:{g:"F · Factualness",d:"Is the triple jointly entailed by the source? Judge head + relation + condition together; check the cited evidence span first, then the paper.",ct:"hand-scored 1–5 · adopted from GenRES",t:"F — Factualness",
-    body:`<p>Adopted from GenRES. The <b>condition carries the ethical nuance</b> and is part of the claim, so it is judged alongside the head and relation.</p>`+ANC([
-      [5,"Head, relation and condition all directly supported by the evidence span, and the span genuinely appears in the source."],
-      [3,"Head + relation supported, but the condition is unsupported, vague, or absent where the text implies one (the “real relation, hallucinated nuance” case)."],
-      [1,"A relation or entity is not supported by the source at all; the evidence span is fabricated, misquoted, or contradicts the claim."]])},
-  G:{g:"G · Granularity",d:"Is each node at a clean, reusable level of abstraction? Penalize both bare abstractions and sentence fragments.",ct:"hand-scored 1–5 · adopted from GenRES",t:"G — Granularity",
-    body:`<p>Adopted from GenRES. Penalizes <b>both extremes</b> — over-coarse abstractions and over-verbose fragments.</p>`+ANC([
-      [5,"Both nodes are crisp, reusable concepts — neither bare nor a fragment (e.g. “socioeconomic stereotyping”, “distance-decay effect”)."],
-      [3,"One node is noticeably off-level: over-coarse (“bias”, “risk”) or over-verbose (a clause that should be compressed)."],
-      [1,"Nodes unusable as graph entities — full sentences, multiple concepts crammed into one, or so generic they carry no information."]])},
-  O:{g:"O · Ontological validity",d:"Does the triple respect the closed DAG ontology — legal type transition, sensible relation polarity, valid harm family?",ct:"hand-scored 1–5 · contribution (no GenRES equiv.)",t:"O — Ontological validity",
-    body:`<p>The domain contribution. Legal spine <code>TechnicalFeature → RiskMechanism → EthicalImpact</code>, with <code>Mitigation → RiskMechanism / EthicalImpact</code> as legal side-edges. Polarity and harm-family validity judged here.</p>`+ANC([
-      [5,"Type transition legal AND relation polarity makes sense (e.g. Mitigation INHIBITS a RiskMechanism; TF PROMOTES a RiskMechanism). For an EthicalImpact, harm_family is present and correct."],
-      [3,"Legal node types but questionable polarity/relation, OR a TF→EI edge skipping a stated RM, OR harm_family on a soft/borderline case."],
-      [1,"Illegal: backward spine edge, two same-type nodes joined by a causal relation, a node typed outside the four classes, or an EthicalImpact whose harm_family fits none of the five."]])},
-  L:{g:"L · Composition validity",d:"Does C follow from A through B as a coherent causal argument? Scored on a connected chain A→B→C, not a single edge.",ct:"hand-scored 1–5 · chain-level (new)",t:"L — Composition validity",
-    body:`<p>Chain-level. Both edges can be individually correct yet fail to <b>compose</b> into one argument.</p>`+ANC([
-      [5,"Clean transitive chain: the same B that A produces is the B that drives C; reads as a sound cause → mechanism → harm argument."],
-      [3,"Both edges individually true, but the link is associative rather than genuinely causal, or the chain is under-specified."],
-      [1,"Non-sequitur: C does not follow from A through B; a mechanical join where the middle term B equivocates between the two edges."]])},
+  ground:{g:"1 · Groundedness",d:"Is the triple really supported by the audited paper — the head genuinely from this paper, and the cited verbatim quote present and supportive?",ct:"expert · pass / fail · → grounding precision",t:"1 — Groundedness (faithfulness)",
+    body:`<p>Does this triple have a real foothold in the audited paper? Maps to the agent's own quote-verification + anchoring gates. <b>→ grounding precision</b> = passed / scored.</p>`+PF(
+      "The head (technical feature / data choice) genuinely belongs to this paper, and the cited verbatim quote actually occurs in the text and supports the claim.",
+      "Hallucination or mis-attribution: the head isn't really this paper's, or the quote is fabricated / paraphrased / absent / doesn't support the claim.")},
+  causal:{g:"2 · Causal validity",d:"Is head → relation → tail a sound, defensible ethical causal claim (true in the domain-KG sense, not a non-sequitur)?",ct:"expert · pass / fail · → edge precision",t:"2 — Causal validity",
+    body:`<p>Is the edge itself a defensible ethical causal assertion? Judged independently of grounding. <b>→ edge precision.</b></p>`+PF(
+      "head → relation → tail is a coherent, defensible ethical causal claim — true in the domain knowledge-graph sense, with sensible relation polarity (PROMOTES / INHIBITS).",
+      "The causal link itself is wrong — a non-sequitur, reversed polarity, or a relationship the domain does not support.")},
+  verdict:{g:"3 · Instantiation verdict",d:"Is INSTANTIATED / POTENTIAL / NOT_TRIGGERED correct for THIS paper — audit finding vs category-level disclosure?",ct:"expert · pass / fail · → verdict precision",t:"3 — Instantiation verdict",
+    body:`<p>The crux of the audit-vs-disclosure headline. Is the instantiation tag right for this specific paper? <b>→ verdict precision.</b></p>`+PF(
+      "The tag is correct: INSTANTIATED = the paper's own method triggers the risk (a real audit finding); POTENTIAL = category-level risk the paper doesn't trigger (disclosure); NOT_TRIGGERED = the paper neutralizes it.",
+      "A merely potential risk is marked INSTANTIATED (or a genuine audit finding is downgraded) — the reported-vs-latent call is wrong for this paper.")},
 };
 
 const SCORE_NOTE = `
-  <p><b>Scale.</b> Every dimension is an integer 1–5 (no 0). Anchors are sharp at <b>5</b> = clean pass, <b>3</b> = right-but-flawed, <b>1</b> = clear fail (2 and 4 are in-between). For aggregation each score rescales to [0,1] via <code>(X−1)/4</code>.</p>
-  <p><b>Aggregation.</b> Per triple, <code>S_triple</code> = geometric mean of rescaled <b>F·G·O</b> — any near-floor dimension tanks the triple. The benchmark workbook's <code>S_graph = 0.75·mean(S_triple) + 0.25·C_chain</code>; <b>L</b> is reported as a separate chain-level mean.</p>
+  <p><b>Scoring.</b> Two domain experts independently judge every emitted triple <b>pass / fail</b> on the three axes — no numeric scale. Each axis is a precision: <code>precision = pass / (pass + fail)</code> over all scored triples.</p>
   <div class="auto">
-    <div class="m"><div class="mn">C_chain — structural recall (auto, not hand-scored)</div>Fraction of triples sitting on a closed TF→RM→EI spine. Reference-free — no gold key needed.</div>
-    <div class="m"><div class="mn">U — non-redundancy (diagnostic)</div>GenRES's Uniqueness, relocated to the synonym-fusion step — a property of the merge, not of one triple.</div>
+    <div class="m"><div class="mn">grounding precision</div>quote-verified and correctly anchored to the paper.</div>
+    <div class="m"><div class="mn">edge precision</div>the causal claim is valid in the domain sense.</div>
+    <div class="m"><div class="mn">verdict precision</div>the instantiation tag is correct for this paper.</div>
   </div>
-  <p><b>vs GenRES</b> (Jiang et al., NAACL 2024): adopts <b>F</b>actualness + <b>G</b>ranularity; drops document-level Topical-Similarity and Completeness (inapplicable to reference-free per-triple scoring); relocates Uniqueness → U; adds <b>O</b>ntological validity and chain-level <b>L</b> composition, which GenRES's open-domain setting has no equivalent for.</p>`;
+  <p><b>Reliability.</b> Both experts score the same triples, so inter-rater agreement is reported alongside the precisions. Ratings are keyed by <code>&lt;doi&gt;#n</code> so each judgement joins back to the exact triple and its audit.</p>
+  <p><b>Recall.</b> Precision only covers what the agent emitted; a per-paper free-text note lets experts flag ethical causal links the audit <i>missed</i>, giving a qualitative recall signal that per-triple scoring can't.</p>`;
 
 /* ---------- render ---------- */
 function card(key){
