@@ -162,6 +162,7 @@
     <span class="prog" id="prog">—</span>
     <button class="btn" id="importBtn">Import…</button>
     <input type="file" id="importFile" accept="application/json" style="display:none"/>
+    <button class="btn" id="clearBtn">Clear</button>
     <button class="btn primary" id="exportBtn">Export ratings</button>
   </div>
   <div class="tally" id="tally"></div>
@@ -382,6 +383,11 @@ function setExpert(name){
   ratings=loadRatings();renderAll();
 }
 
+function validIds(){   // tids in the CURRENT dataset (+ per-paper note ids)
+  const s=new Set();
+  PAPERS.forEach(p=>{p.triples.forEach(t=>s.add(t.tid));s.add((p.source.doi||p.id)+"#paper");});
+  return s;
+}
 function doExport(){
   if(!expert){requireExpert();return;}
   flush();
@@ -390,8 +396,12 @@ function doExport(){
   PAPERS.forEach(p=>p.triples.forEach(t=>{const r=ratings[t.tid]||{};
     if(isDone(r))done++;
     AXES.forEach(a=>{if(r[a.key]==="pass")counts[a.key].pass++;else if(r[a.key]==="fail")counts[a.key].fail++;});}));
+  // only export entries belonging to the current dataset (drops stale keys from
+  // older page versions, e.g. different id schemes or removed axes)
+  const valid=validIds();const cleanRatings={};
+  Object.keys(ratings).forEach(k=>{if(valid.has(k))cleanRatings[k]=ratings[k];});
   const payload={expert,exported:new Date().toISOString(),data_generated:(DATA&&DATA.generated)||"",
-    scored_triples:done,total_triples:TOTAL,counts,ratings};
+    scored_triples:done,total_triples:TOTAL,counts,ratings:cleanRatings};
   const blob=new Blob([JSON.stringify(payload,null,1)],{type:"application/json"});
   const a=document.createElement("a");
   a.href=URL.createObjectURL(blob);
@@ -434,6 +444,11 @@ try{
   ex.addEventListener("blur",()=>setExpert(ex.value));
 
   document.getElementById("exportBtn").onclick=doExport;
+  document.getElementById("clearBtn").onclick=()=>{
+    if(!expert){requireExpert();return;}
+    if(!confirm(`Clear ALL of "${expert}"'s ratings stored in this browser?\nExport first if you want a backup. This cannot be undone.`))return;
+    ratings={};localStorage.removeItem(lsKey(expert));renderAll();toast("Cleared all local ratings.");
+  };
   document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
   document.getElementById("importFile").onchange=e=>{if(e.target.files[0])doImport(e.target.files[0]);e.target.value="";};
   window.addEventListener("beforeunload",flush);
