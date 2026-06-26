@@ -344,7 +344,7 @@ function renderMain(){
       const r=ratings[tid]||(ratings[tid]={});
       if(r[axis]===v)delete r[axis];else r[axis]=v;   // click again to clear
       r.ts=Date.now();persist();bumpSave();
-      tg.querySelectorAll("button").forEach(x=>x.classList.toggle("on",r[x.dataset.v]===x.dataset.v));
+      tg.querySelectorAll("button").forEach(x=>x.classList.toggle("on",r[axis]===x.dataset.v));
       document.getElementById("row-"+tid).classList.toggle("trow-done",isDone(r));
       renderNavLight();renderTally();
     });
