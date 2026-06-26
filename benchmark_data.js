@@ -11,7 +11,7 @@ window.BENCHMARK_DATA = {
     "year": "2026",
     "abstract": "Uncertainty quantification of the photogrammetry process is essential for providing per-point accuracy credentials of the point clouds. Unlike airborne LiDAR, whose accuracy generally remains consistent with objects with varying geometric complexity, the accuracy of photogrammetric point clouds is rather object/scene-dependent, as it relies on algorithm-derived measurements. Generally, errors of the photogrammetric point clouds propagate through a two-step process: Structure-from-Motion (SfM) with Bundle adjustment (BA), followed by Multi-view Stereo (MVS). While uncertainty estimation in the SfM stage has been well studied using the first-order statistics of the reprojection error function, that in the MVS stage remains largely unsolved and non-standardized, primarily due to its non-differentiable and multi-modal nature (i.e., from pixel values to geometry). In this paper, we present an uncertainty quantification framework closing this gap by associating an error covariance matrix per point accounting for this two-step photogrammetry process. Specifically, to estimate the uncertainty in the MVS stage, we propose a novel, self-calibrating method by taking reliable n-view points (n ≥ 6) per-view to regress the disparity uncertainty using highly relevant cues (such as matching cost values) from the MVS stage. Compared to existing approaches, our method uses self-contained, reliable 3D points extracted directly from the MVS process, with the benefit of being self-supervised and "
    },
-   "report": "",
+   "report": "This paper introduces a technical framework focused on uncertainty quantification for the photogrammetry process, aiming to provide certifiable per-point accuracy credentials for point clouds. By addressing measurement dispersions and evaluating reliability within the Earth observation imaging process, the methodology inherently touches upon the ethical domain of deploying models in high-stakes environments. The primary ethical touchpoints involve the performance of these models in safety-critical tasks and high-risk remote sensing applications, where the accuracy of algorithmic predictions is paramount to downstream decision-making.\n\nThe auditor found no ethical risk actually instantiated by this paper's contribution—the findings are at most disclosures of category-level dynamics, and the methodology actively works against potential harms. As a broader category disclosure, there is a strongly grounded potential that the application of uncertainty quantification serves to inhibit the unreliability of algorithmic predictions, specifically under the condition of high-risk remote sensing applications. Furthermore, while it is moderately plausible that such unreliability could promote systemic failure in disaster or safety monitoring—carrying risks of physical harm during the Earth observation imaging process—this negative causal pathway is explicitly not triggered by the paper. The methodology inherently avoids the triggering actions that would compromise safety monitoring systems.\n\nRather than exacerbating risks, the paper natively embeds mitigations by providing certifiable per-point accuracy that allows point clouds to be used reliably. By actively developing uncertainty quantification, the framework successfully neutralizes the unreliability mechanisms that would otherwise threaten safety-critical tasks. In the auditor’s overall judgment, zero risks are actually instantiated by this paper; the review yields only one potential disclosure regarding a protective mechanism and one moderately grounded risk pathway that is explicitly not triggered. The paper proactively addresses ethical concerns within its domain, resulting in a safe technical contribution with no actionable audit findings against it.\n\n---\nAppendix: structured audit triples\n\nGeoAI Ethics Audit Report (triple-based)\n\n- (uncertainty quantification:Mitigation) --INHIBITS--> (unreliability of algorithmic predictions in safety-critical tasks:RiskMechanism)  <graph_exact | quote✓ | disclosure>  (when: high-risk remote sensing applications)\n- (unreliability of algorithmic predictions in safety-critical tasks:RiskMechanism) --PROMOTES--> (systemic failure in disaster or safety monitoring:EthicalImpact) [PhysicalHarm]  <graph_exact | quote✗ | n/a>  (when: Earth observation imaging process)\n\nEntities by type:\n  RiskMechanism: unreliability of algorithmic predictions in safety-critical tasks\n  EthicalImpact: systemic failure in disaster or safety monitoring\n  Mitigation: uncertainty quantification",
    "triples": [
     {
      "head": {
@@ -22,11 +22,13 @@ window.BENCHMARK_DATA = {
      "edge": {
       "relation_type": "INHIBITS",
       "condition": "high-risk remote sensing applications",
-      "evidence": "The paper introduces an uncertainty quantification framework that computes per-point accuracy credentials, which is critical for mitigating the unreliability of spatial measurements in high-stakes fields like disaster response.",
-      "input_quote": "By providing \"per-point accuracy credentials,\" the framework allows for better decision-making in sectors relying on remote sensing, such as precision agriculture or disaster response, where knowing the reliability of a 3D measurement is critical.",
+      "evidence": "The paper introduces a framework for estimating the uncertainty of the photogrammetry process in the Structure-from-Motion and Multi-view Stereo stages, providing certifiable per-point accuracy that mitigates algorithmic unreliability.",
+      "input_quote": "Uncertainty quantification of the photogrammetry process is essential for providing per-point accuracy credentials of the point clouds.",
       "provenance": "graph_exact",
-      "quote_verified": false,
+      "quote_verified": true,
       "instantiation": "POTENTIAL",
+      "instantiation_model_label": "POTENTIAL",
+      "instantiation_downgraded": false,
       "instantiation_quote": "",
       "instantiation_verified": false
      },
@@ -36,7 +38,7 @@ window.BENCHMARK_DATA = {
       "harm_family": null
      },
      "chain_id": "audit::chain000",
-     "tid": "001#0"
+     "tid": "10.1016/j.isprsjprs.2026.04.047#0"
     },
     {
      "head": {
@@ -47,11 +49,13 @@ window.BENCHMARK_DATA = {
      "edge": {
       "relation_type": "PROMOTES",
       "condition": "Earth observation imaging process",
-      "evidence": "If photogrammetric predictions are unreliable and lack certifiable accuracy during remote sensing and mapping missions, it can directly compromise safety assessments and lead to systemic monitoring failures during disaster responses.",
-      "input_quote": "Improved accuracy in UAV-based mapping can impact safety assessments for aging infrastructure (buildings and bridges) in densely populated urban areas.",
+      "evidence": "If algorithmic predictions remain unreliable, they risk triggering systemic failures when deployed in high-stakes downstream applications like disaster management and urban planning.",
+      "input_quote": "The framework provides \"certifiable\" per-point accuracy, enabling photogrammetric point clouds to be used reliably in high-stakes downstream applications.",
       "provenance": "graph_exact",
       "quote_verified": false,
-      "instantiation": "POTENTIAL",
+      "instantiation": "NOT_TRIGGERED",
+      "instantiation_model_label": "NOT_TRIGGERED",
+      "instantiation_downgraded": false,
       "instantiation_quote": "",
       "instantiation_verified": false
      },
@@ -61,7 +65,64 @@ window.BENCHMARK_DATA = {
       "harm_family": "PhysicalHarm"
      },
      "chain_id": "audit::chain000",
-     "tid": "001#1"
+     "tid": "10.1016/j.isprsjprs.2026.04.047#1"
+    }
+   ],
+   "graph_paths": [
+    "(re-identification risk:RiskMechanism) --[PROMOTES | Condition: When de-identification is insufficient to protect sensitive location traces | When anonymous datasets are publicly shared without sufficient protection]--> (privacy violation:EthicalImpact)",
+    "(privacy violation:EthicalImpact) --[PROMOTES | Condition: non-public data associated with industry or national security | When exposing home locations, workspaces, and daily trajectories]--> (privacy violation:EthicalImpact)",
+    "(misclassification of heterogeneous roof types:RiskMechanism) --[PROMOTES | Condition: When roof typology is used as a proxy for socio-economic status]--> (discriminatory resource allocation in humanitarian aid:EthicalImpact)",
+    "(uncertainty quantification:Mitigation) --[INHIBITS | Condition: high-risk remote sensing applications]--> (unreliability of algorithmic predictions in safety-critical tasks:RiskMechanism)",
+    "(unreliability of algorithmic predictions in safety-critical tasks:RiskMechanism) --[PROMOTES | Condition: Earth observation imaging process]--> (systemic failure in disaster or safety monitoring:EthicalImpact)",
+    "(predictive policing:TechnicalFeature) --[PROMOTES | Condition: When biased input data or model designs are employed]--> (criminal misidentification:RiskMechanism)",
+    "(EU Artificial Intelligence Act:Mitigation) --[INHIBITS | Condition: Implementation of a comprehensive legislative attempt]--> (risks of artificial intelligence:RiskMechanism)",
+    "(spatial data bias:RiskMechanism) --[PROMOTES]--> (social inequity:EthicalImpact)",
+    "(predictive policing:TechnicalFeature) --[PROMOTES | Condition: Neighborhood level]--> (geographic representation bias:RiskMechanism)",
+    "(misclassification of heterogeneous roof types:RiskMechanism) --[PROMOTES | Condition: When roof typology is used as a proxy for socio-economic status]--> (resource allocation inequality:EthicalImpact)",
+    "(modifiable areal unit problem maup:TechnicalFeature) --[PROMOTES]--> (geographic representation bias:RiskMechanism)",
+    "(training data errors in ml-based mapping:TechnicalFeature) --[PROMOTES | Condition: Mapping of Deprived Urban Areas (DUAs)]--> (geographic representation bias:RiskMechanism)",
+    "(biased machine learning datasets:TechnicalFeature) --[PROMOTES | Condition: When data is sparse in rural areas or privileges dominant demographics]--> (social inequity:EthicalImpact)",
+    "(ai-driven building detection and classification from remote sensing data:TechnicalFeature) --[PROMOTES | Condition: When training data contains sample imbalances for specific infrastructure types]--> (misclassification of heterogeneous roof types:RiskMechanism)",
+    "(individual risk profiling based on location and driving data:RiskMechanism) --[PROMOTES]--> (economic loss from increased insurance costs:EthicalImpact)",
+    "(data integration and modeling:Mitigation) --[INHIBITS | Condition: When used to correct bias in crowdsourced or VGI datasets by combining multiple data sources.]--> (algorithmic bias:RiskMechanism)",
+    "(Privacy by Design:Mitigation) --[INHIBITS | Condition: In humanitarian and crisis contexts]--> (privacy violation:EthicalImpact)",
+    "(ai risk estimation models:TechnicalFeature) --[PROMOTES | Condition: When applied to health insurance rate setting]--> (individual risk profiling based on location and driving data:RiskMechanism)",
+    "(computer vision:TechnicalFeature) --[PROMOTES | Condition: Identity authentication at borders or on devices]--> (algorithmic bias:RiskMechanism)",
+    "(individual risk profiling based on location and driving data:RiskMechanism) --[PROMOTES]--> (economic loss:EthicalImpact)",
+    "(inadvertent inferential error:RiskMechanism) --[PROMOTES | Condition: In the absence of ethical guides to provide checks and balances on data and methods.]--> (social inequity:EthicalImpact)",
+    "(deep-learning algorithm for image segmentation beam:TechnicalFeature) --[PROMOTES | Condition: When training data is specific to informal dwellings but applied to formal or industrial city areas.]--> (algorithmic focus bias:RiskMechanism)",
+    "(EU AI Act Article 10: Data Governance and Bias Audits:Mitigation) --[INHIBITS | Condition: High-risk systems under Annex III]--> (use of non-representative or error-prone geospatial datasets in high-risk systems:RiskMechanism)",
+    "(Multi-grouping visualization:Mitigation) --[INHIBITS | Condition: By comparing outcomes across different grouping schemes]--> (subjective narrative reinforcement:RiskMechanism)",
+    "(manipulation of xai methods:TechnicalFeature) --[PROMOTES]--> (algorithmic bias:RiskMechanism)",
+    "(deep learning models for population mapping:TechnicalFeature) --[PROMOTES | Condition: Under conditions of spatial heterogeneity and varying neighborhood sizes]--> (population estimation bias:RiskMechanism)",
+    "(Privacy by Design:Mitigation) --[INHIBITS | Condition: By reducing the volume of sensitive spatial data collected]--> (re-identification risk:RiskMechanism)",
+    "(geographic data scarcity in rural and remote areas:TechnicalFeature) --[PROMOTES | Condition: when models perform well only in data-rich urban areas]--> (inequitable resource and service distribution:EthicalImpact)",
+    "(EU Artificial Intelligence Act:Mitigation) --[INHIBITS | Condition: High-risk systems under Annex III]--> (use of non-representative or error-prone geospatial datasets in high-risk systems:RiskMechanism)",
+    "(inadvertent inferential error:RiskMechanism) --[PROMOTES | Condition: In the absence of ethical guides to provide checks and balances on data and methods.]--> (inequitable social outcomes:EthicalImpact)",
+    "(population estimation bias:RiskMechanism) --[PROMOTES | Condition: In the context of land use and resource management]--> (inequitable resource allocation from misclassification:EthicalImpact)",
+    "(subjective spatial and non-spatial data grouping:TechnicalFeature) --[PROMOTES]--> (subjective narrative reinforcement:RiskMechanism)",
+    "(population-based heuristics in toponym resolution:TechnicalFeature) --[PROMOTES | Condition: During place name disambiguation (toponym resolution)]--> (geographic representation bias:RiskMechanism)",
+    "(surveillance and tracking measures:TechnicalFeature) --[PROMOTES | Condition: During the COVID-19 pandemic]--> (privacy violation:EthicalImpact)",
+    "(population estimation bias:RiskMechanism) --[PROMOTES | Condition: When models are used to facilitate resource allocation and disaster preparedness]--> (inequitable resource and service distribution:EthicalImpact)",
+    "(geographic data scarcity in rural and remote areas:TechnicalFeature) --[PROMOTES | Condition: When datasets fail to represent actual target regions]--> (population estimation bias:RiskMechanism)",
+    "(subjective narrative reinforcement:RiskMechanism) --[PROMOTES]--> (statistical gerrymandering and social stereotype reinforcement:EthicalImpact)",
+    "(black-box spatial analysis:TechnicalFeature) --[PROMOTES | Condition: When complex multidimensional geographic variables are processed without transparent guardrails.]--> (inadvertent inferential error:RiskMechanism)",
+    "(Visualization-based mitigation:Mitigation) --[INHIBITS | Condition: By comparing outcomes across different grouping schemes]--> (subjective narrative reinforcement:RiskMechanism)",
+    "(deep-learning algorithm for image segmentation beam:TechnicalFeature) --[PROMOTES | Condition: When training data is specific to informal dwellings but applied to formal or industrial city areas.]--> (algorithmic bias:RiskMechanism)",
+    "(EU Artificial Intelligence Act:Mitigation) --[INHIBITS | Condition: High-risk automated decision systems]--> (over-reliance on biased or erroneous automated geoai decisions:RiskMechanism)"
+   ],
+   "track2_docs": [
+    {
+     "source": "Responsible_AI_for_Cities.pdf",
+     "content": "news articles, and online presentations related to these two pro - jects. Appendix C presents the sources of the secondary data used in our study. Findings Generalizability Owing to the limited bandwidth of eThekwini’s broadband network, data for AI model  training took a prolonged time to reach UNITAC, which is based in Hamburg, Germany.  JOURNAL OF URBAN TECHNOLOGY   119 Initial samples were shared via a third party to begin development of the tool, but the  bulk of the database for a single year of imagery (approximately 200GB) had to be phys - ically transported on a hard drive. Although the model achieved 94 percent accuracy for  the year 2019, it soon became apparent that the data-task-AI fit was very limited in terms  of generalizability. The images were affected by atmospheric conditions, seasons, and  time of flight. Additionally, the quality was affected by the sensor used for image  capture, as the company managing the collection process operates over a three-year con - tract, and every third year a LiDAR scan is performed instead of normal photography.  Therefore, image sets vary significantly from year to year. As a result, the images collected  in 2020 had already a significantly lower tool performance and required retraining of the  model. One of the use cases envisioned by the Human Settlement Unit was running  BEAM through decades-wide historical aerials in the municipality’s archives.  However, this solution would have required lengthy manual labeling and training for  each image set. Project development on the eThekwini side also moved from the  Human Settlement Unit to Corporate GIS Unit, the City’s centralized spatial data  storage unit. This handover was meant to provide better technical expertise and was  aligned with the city’s data management rationalization. However, it shifted the focus  of the tool from informal settlements to the entire city: a building footprint layer is “foun - dational” (INT.05) because it provides the basis for"
+    },
+    {
+     "source": "AI Security for Geoscience and Remote Sensing- Challenges and Future Trends.pdf",
+     "content": "uncertainty quantification approaches were developed to estimate the reliability of the model predictions. B. Sources of Uncertainty 1) Data Uncertainty: Data uncertainty consists of random- ness and bias in the data samples in the training and testing datasets caused by measurement errors or sampling errors, and lack of knowledge, [105]. In particular, data uncertainty can be divided into uncertainty in the raw data and lack of domain knowledge. Uncertainty in the raw data usually arises in the EO data collection and preprocessing stages, including the RS imaging process and annotations of the Earth’s surface properties for remote observation. To understand uncertainty in this EO data collection stage, a guide to the expression of uncertainty in measurement (GUM) has been proposed. It defines uncertainty as a parameter associated with the result of a measurement that characterizes the dispersion of the values that could reasonably be attributed to the measurand of the raw EO data ( i.e., X and X ∗) [106]. However, uncertainty in the measurement is inevitable and remains difficult to represent and estimate from the observations [107]. On the contrary, the labeled targets subset Y of the training dataset can bring uncertainty due to mistakes in the artificial labeling process and discrete annotations of ground surfaces. Specifically, definite bound- aries between land cover classes are often nonexistent in the real world, and determining the type of classification scheme characterizing the precise nature of the classes is uncertain [108]. Furthermore, the lack of domain knowledge of the model can cause uncertainty concerning the different domain dis- tributions of the observed data in the training dataset X and testing dataset X ∗. In the process of RS imaging, the characteristics of the observed data are related to spatial and temporal conditions, such as illumination, season and weather. The alternatives of the imaging situation can lead to hetero- geneous data"
+    },
+    {
+     "source": "AI Security for Geoscience and Remote Sensing- Challenges and Future Trends.pdf",
+     "content": "model deployment. In the context of supervised learning, a training dataset D is constructed in the data collection step, containing N pairs of input data sample x and labeled target y, as follows: D = (X , Y) = {xi, yi}N i=1. (9) Then, the model architecture is designed according to the requirement of EO missions, and the mapping function as well as its parameters θ are initialized (i.e., fθ is determined). IEEE GEOSCIENCE AND REMOTE SENSING MAGAZINE, JUNE 2023 11 Data Collection𝒟=(𝒳,𝒴) Model Construction𝑓𝜽:𝕏→𝕐 Model Training𝜽→𝒟.𝜽Model Deployment𝑓#𝜽:𝕏∗→𝕐∗ Data UncertaintyModel Uncertainty Fig. 9. Flow chart of an AI algorithm being applied to geoscience and RS data analysis. Next, the model training process utilizes a loss function to minimize errors and optimize the parameters of the model with the training dataset D (i.e., the parameters θ are optimized to ˆθ). Finally, the samples in the testing dataset x∗ ∈ X ∗ are forwarded into predictions y∗ ∈ Y ∗ using the trained model fˆθ in the model deployment step ( i.e., f ˆθ : X∗ → Y∗). The concept of uncertainty refers to a lack of knowledge about specific factors, parameters or models [104]. Among the above steps of applying an AI algorithm, uncertainty can occur in the training dataset and testing dataset during data collection and model deployment (data uncertainty). Mean- while, uncertainty can also arise in the model parameters and their optimization during model construction and model training (model uncertainty). In the literature, many studies were undertaken to determine the sources of uncertainty, while various uncertainty quantification approaches were developed to estimate the reliability of the model predictions. B. Sources of Uncertainty 1) Data Uncertainty: Data uncertainty consists of random- ness and bias in the data samples in the training and testing datasets caused by measurement errors or sampling errors, and lack of knowledge, [105]. In particular, data uncertainty can be divided into"
     }
    ]
   },
@@ -75,7 +136,7 @@ window.BENCHMARK_DATA = {
     "year": "2026",
     "abstract": "Land Use and Land Cover (LULC) mapping is a fundamental task in Earth Observation (EO). However, current LULC models are typically developed for a specific modality and a fixed class taxonomy, limiting their generalizability and broader applicability. Recent advances in foundation models (FMs) offer promising opportunities for building universal models. Yet, task-agnostic FMs often require fine-tuning for downstream applications, whereas task-specific FMs rely on massive amounts of labeled data for training, which is costly and impractical in the remote sensing (RS) domain. To address these challenges, we propose LandSegmenter, an LULC FM framework that resolves three-stage challenges at the input, model, and output levels. From the input side, to alleviate the heavy demand on labeled data for FM training, we introduce LAnd Segment (LAS), a large-scale, multi-modal, multi-source dataset built primarily with globally sampled weak labels from existing LULC products. LAS provides a scalable, cost-effective alternative to manual annotation, enabling large-scale FM training across diverse LULC domains. For model architecture, LandSegmenter integrates an RS-specific adapter for cross-modal feature extraction and a text encoder for semantic awareness enhancement. At the output stage, we introduce a class-wise confidence-guided fusion strategy to mitigate semantic omissions and further improve LandSegmenter’s zero-shot performance. We evaluate LandSegmenter on six precisely annotated"
    },
-   "report": "",
+   "report": "This paper introduces LandSegmenter, a land use and land cover (LULC) foundation model framework designed to handle diverse sensors and taxonomies with minimal fine-tuning. Technically, the authors curate a large-scale dataset comprising subsets from diverse sources for the model's pre-training and fine-tuning stages, and they apply AI-driven building detection to remote sensing data from major metropolitan areas. These methodological choices intersect with ethical considerations primarily through the mass aggregation of geospatial training data, the push toward process automation with reduced human intervention, and the categorization of urban infrastructure.\n\nThe auditor finds with strong confidence one actually instantiated risk: the development of this GeoAI foundation model promotes the disclosure of sensitive geospatial data, specifically conditioned upon the pre-training and fine-tuning stages that utilize the curated geospatial datasets. Beyond this concrete finding, several category-level risks are disclosed as potential pathways associated with the paper's techniques, though they are not actually triggered by this research. Plausibly, the disclosure of sensitive geospatial data could promote location privacy violations, but only under the condition that home locations, workspaces, or daily trajectories are explicitly exposed. Furthermore, the framework's highly automated nature presents a moderate potential for automation bias; if users overrely on the AI results without local expertise, this bias could lead to economic loss through the misinterpretation or misuse of remote sensing data. Finally, the AI-driven building detection technique holds a moderate potential for misclassifying heterogeneous roof types if the training data contains sample imbalances, which could subsequently drive resource allocation inequality if roof typology is inappropriately utilized as a proxy for socio-economic status. \n\nThe extracted audit records do not identify any explicit mitigations or neutralized risks within the paper's text. Overall, the auditor's judgment is that out of six evaluated risk pathways, only one is actually instantiated by the paper's contributions: the well-grounded, strong-confidence finding regarding the exposure of sensitive geospatial data during model training. The remaining five risk pathways are merely disclosures of broader category-level vulnerabilities—such as downstream privacy violations, automation bias, and equality harms—which the paper's specific use cases do not trigger. While the baseline data sensitivity risk requires careful consideration by developers, the more severe downstream ethical impacts remain theoretical rather than actualized by this work.\n\n---\nAppendix: structured audit triples\n\nGeoAI Ethics Audit Report (triple-based)\n\n- (geoai foundation models:TechnicalFeature) --PROMOTES--> (disclosure of sensitive geospatial data:RiskMechanism)  <graph_exact | quote✓ | AUDIT>  (when: During pre-training and fine-tuning stages with geospatial data)\n- (disclosure of sensitive geospatial data:RiskMechanism) --PROMOTES--> (location privacy violation:EthicalImpact) [PrivacyViolation]  <graph_exact | quote✗ | disclosure>  (when: When exposing home locations, workspaces, and daily trajectories)\n- (process automation with reduced human intervention:TechnicalFeature) --PROMOTES--> (automation bias:RiskMechanism)  <graph_exact | quote✗ | disclosure>\n- (automation bias:RiskMechanism) --PROMOTES--> (misinterpretation or misuse of remote sensing data:EthicalImpact) [EconomicLoss]  <graph_exact | quote✗ | disclosure>  (when: Overreliance on AI results without local expertise)\n- (ai-driven building detection and classification from remote sensing data:TechnicalFeature) --PROMOTES--> (misclassification of heterogeneous roof types:RiskMechanism)  <graph_exact | quote✗ | disclosure>  (when: When training data contains sample imbalances for specific infrastructure types)\n- (misclassification of heterogeneous roof types:RiskMechanism) --PROMOTES--> (resource allocation inequality:EthicalImpact) [EqualRightsViolation]  <graph_exact | quote✗ | disclosure>  (when: When roof typology is used as a proxy for socio-economic status)\n\nEntities by type:\n  TechnicalFeature: geoai foundation models, process automation with reduced human intervention, ai-driven building detection and classification from remote sensing data\n  RiskMechanism: disclosure of sensitive geospatial data, automation bias, misclassification of heterogeneous roof types\n  EthicalImpact: location privacy violation, misinterpretation or misuse of remote sensing data, resource allocation inequality",
    "triples": [
     {
      "head": {
@@ -85,13 +146,15 @@ window.BENCHMARK_DATA = {
      "edge": {
       "relation_type": "PROMOTES",
       "condition": "During pre-training and fine-tuning stages with geospatial data",
-      "evidence": "The paper introduces LandSegmenter, a foundation model specifically designed for Earth Observation, heavily trained on diverse and large-scale geospatial imagery.",
+      "evidence": "The paper introduces LandSegmenter, a foundational model trained on massive multi-modal remote sensing datasets across global contexts, which inherent risks sensitive data inclusion during large-scale pre-training.",
       "input_quote": "To address these challenges, we propose LandSegmenter, an LULC FM framework that resolves three-stage challenges at the input, model, and output levels.",
       "provenance": "graph_exact",
       "quote_verified": true,
-      "instantiation": "POTENTIAL",
-      "instantiation_quote": "",
-      "instantiation_verified": false
+      "instantiation": "INSTANTIATED",
+      "instantiation_model_label": "INSTANTIATED",
+      "instantiation_downgraded": false,
+      "instantiation_quote": "For LULC FM training, we curated the LAS dataset, comprising eight subsets from diverse sources, as shown in Fig. 2.",
+      "instantiation_verified": true
      },
      "tail": {
       "entity": "disclosure of sensitive geospatial data",
@@ -99,7 +162,7 @@ window.BENCHMARK_DATA = {
       "harm_family": null
      },
      "chain_id": "audit::chain000",
-     "tid": "002#0"
+     "tid": "10.1016/j.isprsjprs.2026.04.056#0"
     },
     {
      "head": {
@@ -108,12 +171,14 @@ window.BENCHMARK_DATA = {
      },
      "edge": {
       "relation_type": "PROMOTES",
-      "condition": "non-public data associated with industry or national security | When exposing home locations, workspaces, and daily trajectories",
-      "evidence": "The foundation model is trained and evaluated using very-high-resolution datasets (e.g., 5cm Potsdam, 0.6m NYC) that capture detailed features in urban environments and residential settings, risking the exposure of localized private patterns.",
-      "input_quote": "Potsdam: 5cm GSD; very-high-resolution urban semantic segmentation (Germany).",
+      "condition": "When exposing home locations, workspaces, and daily trajectories",
+      "evidence": "By training and evaluating on high-resolution urban datasets capable of identifying individual structures and residential details, the framework poses risks of exposing specific locational contexts if non-public or sensitive features are inadvertently mapped.",
+      "input_quote": "Utilizes datasets from major metropolitan areas (New York City, Chinese cities) for identifying buildings, impervious surfaces, and residential areas.",
       "provenance": "graph_exact",
       "quote_verified": false,
       "instantiation": "POTENTIAL",
+      "instantiation_model_label": "POTENTIAL",
+      "instantiation_downgraded": false,
       "instantiation_quote": "",
       "instantiation_verified": false
      },
@@ -123,55 +188,7 @@ window.BENCHMARK_DATA = {
       "harm_family": "PrivacyViolation"
      },
      "chain_id": "audit::chain000",
-     "tid": "002#1"
-    },
-    {
-     "head": {
-      "entity": "High-complexity GeoAI models",
-      "type": "TechnicalFeature"
-     },
-     "edge": {
-      "relation_type": "PROMOTES",
-      "condition": "",
-      "evidence": "LandSegmenter's architecture integrates highly complex, multi-modal components including a SAM2 backbone, high-frequency extractors, and vision-text decoders with stacked transformers.",
-      "input_quote": "A vision–text collaborative decoder featuring stacked Two-Way Transformer blocks.",
-      "provenance": "graph_exact",
-      "quote_verified": false,
-      "instantiation": "POTENTIAL",
-      "instantiation_quote": "",
-      "instantiation_verified": false
-     },
-     "tail": {
-      "entity": "greenhouse gas emissions",
-      "type": "RiskMechanism",
-      "harm_family": null
-     },
-     "chain_id": "audit::chain001",
-     "tid": "002#2"
-    },
-    {
-     "head": {
-      "entity": "greenhouse gas emissions",
-      "type": "RiskMechanism"
-     },
-     "edge": {
-      "relation_type": "PROMOTES",
-      "condition": "Global scope affecting communities most vulnerable to climate change",
-      "evidence": "Training a highly complex remote sensing foundation model involves processing hundreds of thousands of image patches, demanding massive computational resources that drive up energy consumption and carbon footprints.",
-      "input_quote": "LAS Dataset (Primary Training): A curated dataset of ~150k globally distributed sample points (~311k image patches).",
-      "provenance": "graph_exact",
-      "quote_verified": false,
-      "instantiation": "POTENTIAL",
-      "instantiation_quote": "",
-      "instantiation_verified": false
-     },
-     "tail": {
-      "entity": "climate change consequences affecting vulnerable populations",
-      "type": "EthicalImpact",
-      "harm_family": "PhysicalHarm"
-     },
-     "chain_id": "audit::chain001",
-     "tid": "002#3"
+     "tid": "10.1016/j.isprsjprs.2026.04.056#1"
     },
     {
      "head": {
@@ -181,35 +198,39 @@ window.BENCHMARK_DATA = {
      "edge": {
       "relation_type": "PROMOTES",
       "condition": "",
-      "evidence": "By replacing rigorous human annotation with automated generation of weak labels from existing products in Google Earth Engine, human oversight is minimized during the curation of the primary training dataset.",
-      "input_quote": "LAS provides a scalable, cost-effective alternative to manual annotation, enabling large-scale FM training across diverse LULC domains.",
+      "evidence": "The implementation of zero-shot semantic segmentation with robust generalizability automates the creation of land cover maps while requiring little to no human fine-tuning.",
+      "input_quote": "The framework provides a universal, flexible LULC solution capable of handling diverse sensors and taxonomies with minimal or no fine-tuning.",
       "provenance": "graph_exact",
-      "quote_verified": true,
+      "quote_verified": false,
       "instantiation": "POTENTIAL",
+      "instantiation_model_label": "POTENTIAL",
+      "instantiation_downgraded": false,
       "instantiation_quote": "",
       "instantiation_verified": false
      },
      "tail": {
-      "entity": "bias",
+      "entity": "automation bias",
       "type": "RiskMechanism",
       "harm_family": null
      },
-     "chain_id": "audit::chain002",
-     "tid": "002#4"
+     "chain_id": "audit::chain001",
+     "tid": "10.1016/j.isprsjprs.2026.04.056#2"
     },
     {
      "head": {
-      "entity": "bias",
+      "entity": "automation bias",
       "type": "RiskMechanism"
      },
      "edge": {
       "relation_type": "PROMOTES",
       "condition": "Overreliance on AI results without local expertise",
-      "evidence": "Automating dataset generation with weakly supervised, potentially noisy labels can embed inaccuracies into the foundation model. Overreliance on these outputs in resource allocation or land management can lead to negative economic outcomes.",
-      "input_quote": "Label Quality: ~80% of the dataset consists of weak labels derived from existing LULC products via Google Earth Engine (GEE).",
+      "evidence": "Given that these automatically generated maps are explicitly intended for critical environmental and administrative decisions, an overreliance on zero-shot map boundaries without local ground-truthing can lead to critical misinterpretations affecting agriculture and resource allocation.",
+      "input_quote": "Directly maps land use for agriculture (crops), forestry, and water management.",
       "provenance": "graph_exact",
       "quote_verified": false,
       "instantiation": "POTENTIAL",
+      "instantiation_model_label": "POTENTIAL",
+      "instantiation_downgraded": false,
       "instantiation_quote": "",
       "instantiation_verified": false
      },
@@ -218,8 +239,110 @@ window.BENCHMARK_DATA = {
       "type": "EthicalImpact",
       "harm_family": "EconomicLoss"
      },
+     "chain_id": "audit::chain001",
+     "tid": "10.1016/j.isprsjprs.2026.04.056#3"
+    },
+    {
+     "head": {
+      "entity": "ai-driven building detection and classification from remote sensing data",
+      "type": "TechnicalFeature"
+     },
+     "edge": {
+      "relation_type": "PROMOTES",
+      "condition": "When training data contains sample imbalances for specific infrastructure types",
+      "evidence": "The framework is applied specifically to map structures and residential areas using metropolitan datasets. Uneven representation of global architectural variations in the weak training labels could drive the misclassification of certain urban morphologies.",
+      "input_quote": "Utilizes datasets from major metropolitan areas (New York City, Chinese cities) for identifying buildings, impervious surfaces, and residential areas.",
+      "provenance": "graph_exact",
+      "quote_verified": false,
+      "instantiation": "POTENTIAL",
+      "instantiation_model_label": "POTENTIAL",
+      "instantiation_downgraded": false,
+      "instantiation_quote": "",
+      "instantiation_verified": false
+     },
+     "tail": {
+      "entity": "misclassification of heterogeneous roof types",
+      "type": "RiskMechanism",
+      "harm_family": null
+     },
      "chain_id": "audit::chain002",
-     "tid": "002#5"
+     "tid": "10.1016/j.isprsjprs.2026.04.056#4"
+    },
+    {
+     "head": {
+      "entity": "misclassification of heterogeneous roof types",
+      "type": "RiskMechanism"
+     },
+     "edge": {
+      "relation_type": "PROMOTES",
+      "condition": "When roof typology is used as a proxy for socio-economic status",
+      "evidence": "Because regional planners and public administrators rely on these segmented features as reference data, misclassification of different residential types could unfairly skew the geographic distribution of administrative resources or public funds.",
+      "input_quote": "Employs reference data from administrative databases (e.g., French BDOCGE2) used by regional planners.",
+      "provenance": "graph_exact",
+      "quote_verified": false,
+      "instantiation": "POTENTIAL",
+      "instantiation_model_label": "POTENTIAL",
+      "instantiation_downgraded": false,
+      "instantiation_quote": "",
+      "instantiation_verified": false
+     },
+     "tail": {
+      "entity": "resource allocation inequality",
+      "type": "EthicalImpact",
+      "harm_family": "EqualRightsViolation"
+     },
+     "chain_id": "audit::chain002",
+     "tid": "10.1016/j.isprsjprs.2026.04.056#5"
+    }
+   ],
+   "graph_paths": [
+    "(re-identification risk:RiskMechanism) --[PROMOTES | Condition: When de-identification is insufficient to protect sensitive location traces | When anonymous datasets are publicly shared without sufficient protection]--> (privacy violation:EthicalImpact)",
+    "(disclosure of sensitive geospatial data:RiskMechanism) --[PROMOTES | Condition: non-public data associated with industry or national security | When exposing home locations, workspaces, and daily trajectories]--> (location privacy violation:EthicalImpact)",
+    "(privacy violation:EthicalImpact) --[PROMOTES | Condition: non-public data associated with industry or national security | When exposing home locations, workspaces, and daily trajectories]--> (privacy violation:EthicalImpact)",
+    "(dalle 2 generative map synthesis:TechnicalFeature) --[PROMOTES | Condition: when models generate pseudo-words or non-existent provinces]--> (generation of misleading geospatial information and pseudo-words:RiskMechanism)",
+    "(GeoAI models utilizing location data:TechnicalFeature) --[PROMOTES | Condition: When location is used as a proxy for social demographics]--> (collinearity between geographic location and protected characteristics raceethnicity:RiskMechanism)",
+    "(unrepresentative geographic training data:TechnicalFeature) --[PROMOTES | Condition: When data is heavily skewed toward specific regions like North America and Europe]--> (biased model predictions and rankings:RiskMechanism)",
+    "(process automation with reduced human intervention:TechnicalFeature) --[PROMOTES]--> (automation bias:RiskMechanism)",
+    "(User privacy protection methods:Mitigation) --[INHIBITS | Condition: In human mobility studies seeking to balance data utility and privacy]--> (disclosure of sensitive geospatial data:RiskMechanism)",
+    "(public sharing of personal vehicle trajectory data:TechnicalFeature) --[PROMOTES]--> (privacy violation:EthicalImpact)",
+    "(federated learning:Mitigation) --[INHIBITS | Condition: decentralized data distribution]--> (disclosure of sensitive geospatial data:RiskMechanism)",
+    "(classification of informal settlements and slums:TechnicalFeature) --[PROMOTES | Condition: When sensitive maps are published without care for local consequences]--> (Territorial stigmatization:RiskMechanism)",
+    "(GeoAI modeling:TechnicalFeature) --[PROMOTES | Condition: When location is used as a proxy for social demographics]--> (collinearity between geographic location and protected characteristics raceethnicity:RiskMechanism)",
+    "(bias:RiskMechanism) --[PROMOTES | Condition: Overreliance on AI results without local expertise]--> (misinterpretation or misuse of remote sensing data:EthicalImpact)",
+    "(collinearity between geographic location and protected characteristics raceethnicity:RiskMechanism) --[PROMOTES]--> (systematic discrimination:EthicalImpact)",
+    "(biased model predictions and rankings:RiskMechanism) --[PROMOTES | Condition: In scenarios affecting resource allocation, safety classification, or visibility]--> (geographic discrimination and social inequality:EthicalImpact)",
+    "(generative adversarial networks gans:TechnicalFeature) --[PROMOTES | Condition: When models create unrealistic artifacts in map designs]--> (deep fake geography:EthicalImpact)",
+    "(ai-driven building detection and classification from remote sensing data:TechnicalFeature) --[PROMOTES | Condition: When training data contains sample imbalances for specific infrastructure types]--> (misclassification of heterogeneous roof types:RiskMechanism)",
+    "(surveillance and tracking measures:TechnicalFeature) --[PROMOTES | Condition: During the COVID-19 pandemic]--> (privacy violation:EthicalImpact)",
+    "(biased model predictions and rankings:RiskMechanism) --[PROMOTES | Condition: In scenarios affecting resource allocation, safety classification, or visibility]--> (geospatial discrimination:EthicalImpact)",
+    "(geospatial data features:TechnicalFeature) --[PROMOTES | Condition: If geodata is not handled appropriately.]--> (privacy violation:EthicalImpact)",
+    "(ai technology:TechnicalFeature) --[PROMOTES | Condition: Development lacking integration with the humanities]--> (bias:RiskMechanism)",
+    "(collinearity between geographic location and protected characteristics raceethnicity:RiskMechanism) --[PROMOTES]--> (racial and income-based discrimination:EthicalImpact)",
+    "(process automation with reduced human intervention:TechnicalFeature) --[PROMOTES]--> (bias:RiskMechanism)",
+    "(generation of misleading geospatial information and pseudo-words:RiskMechanism) --[PROMOTES | Condition: particularly in sensitive political or cultural contexts]--> (geospatial misinformation:EthicalImpact)",
+    "(Territorial stigmatization:RiskMechanism) --[PROMOTES | Condition: When stigmatization affects public perception and policy]--> (forced evictions and displacement:EthicalImpact)",
+    "(misclassification of heterogeneous roof types:RiskMechanism) --[PROMOTES | Condition: When roof typology is used as a proxy for socio-economic status]--> (discriminatory resource allocation in humanitarian aid:EthicalImpact)",
+    "(Geomasking and spatial-temporal cloaking:Mitigation) --[INHIBITS]--> (disclosure of sensitive geospatial data:RiskMechanism)",
+    "(misclassification of heterogeneous roof types:RiskMechanism) --[PROMOTES | Condition: When roof typology is used as a proxy for socio-economic status]--> (resource allocation inequality:EthicalImpact)",
+    "(predictive policing:TechnicalFeature) --[PROMOTES | Condition: When biased input data or model designs are employed]--> (criminal misidentification:RiskMechanism)",
+    "(generative adversarial networks gans:TechnicalFeature) --[PROMOTES | Condition: When models create unrealistic artifacts in map designs]--> (geospatial misinformation:EthicalImpact)",
+    "(predictive policing:TechnicalFeature) --[PROMOTES | Condition: Neighborhood level]--> (geographic representation bias:RiskMechanism)",
+    "(resnet-18 based ai-generated map detector:Mitigation) --[INHIBITS | Condition: when applied to identify potential misinformation on social media]--> (geospatial misinformation:EthicalImpact)",
+    "(geoai foundation models:TechnicalFeature) --[PROMOTES | Condition: During pre-training and fine-tuning stages with geospatial data]--> (disclosure of sensitive geospatial data:RiskMechanism)",
+    "(automation bias:RiskMechanism) --[PROMOTES | Condition: Overreliance on AI results without local expertise]--> (misinterpretation or misuse of remote sensing data:EthicalImpact)"
+   ],
+   "track2_docs": [
+    {
+     "source": "AI Security for Geoscience and Remote Sensing- Challenges and Future Trends.pdf",
+     "content": "map in the 1st convolutional layer. (b) Detection results for vegetation. (c) The 6th feature map in the 6th convolutional layer. (d) Detection results for metal sheets. Guided Grad-CAM method, which indicates that the differ- ences in the edge shapes of foliage and bush of branch play an important role in identifying tree species for CNN models. In [152], Huang et al. proposed a novel network, named encoder- classifier-reconstruction CAM (ECR-CAM), to provide more accurate visual interpretations for more complicated objects contained in remote sensing images. Specifically, the ECR- CAM method can learn more informative features by attaching a reconstruction subtask to the original classification task. Meanwhile, the extracted features are visualized using the CAM module based on the training of the network. The visualized heatmaps of ResNet-101 and DenseNet-201 with the proposed ECR-CAM method and other XAI methods are shown in Fig. 15. We can observe that the ECR-CAM can more precisely locate the target objects and achieves a better evaluation result for capturing multiple objects. In [15], Xu et al. proposed a novel text-to-image modern Hopfield network (Txt2Img-MHN) for RS image generation 6. Unlike previous studies that directly learn concrete and diverse text-image fea- tures, the Txt2Img-MHN aims to learn the most representative prototypes from text-image embeddings by the Hopfield layer, thus, generating coarse-to-fine images for different semantics. For an understandable interpretation of the learned prototypes, the top 20 tokens were visualized, which are highly correlated to the basic components for image generation, such as different colors and texture patterns. Other representative prototype- based XAI algorithms in geoscience and RS include [153]– [155]. C. Future Perspectives The past 10 years have witnessed a rapid rise of AI algorithms in geoscience and RS. Meanwhile, there now exists greater awareness of the need to develop AI models with more"
+    },
+    {
+     "source": "RESPONSIBLE AI FOR EARTH OBSERVATION.pdf",
+     "content": "crop types, land use intensities or tree species separable only at certain phenological stages [110–112]. • Most AI algorithms for image analyses were developed on three-band red-green-blue (RGB) imagery, often based on VHR drone data. Today’s multi- to hyperspectral satellite data ask for more sophisticated approaches to detect not just the obvious, but the relevant. This is aggravated by more spectral detail in radiometric data beyond 8-bit and even more by using virtual constellations [113], ranging from optical over radar to LiDAR data. • Sparse labeling problems occur with increasing areas of interest enabled by AI4EO. More severe problems are inherited by biased samples across larger regions or non-trivial features to be sampled from existing data or the imagery itself [114, 115]. While all these aspects are relevant for any EO analysis framework, opportunities have increased rapidly with AI4EO (e.g., regarding the size of areas of interest that can be handled). Along with these are the related risks and potential awareness deficits. Many, if not the majority of, AI4EO studies focused on comparably small use cases in the past to develop or apply algorithms. However, the roll-out to real-world problems, for example, at the national, continental or even global scale, requires ubiquitous algorithms that can handle much more diverse feature spaces (over time). There is indeed a lack of upscaling studies demonstrating the suitability of most algorithms for tackling real-world problems [68, 116, 117]. 5.6 Sustainability Since 2015, the United Nations has set an ambitious agenda related to the Sustainable Development Goals (SDG), aiming to improve social, economic and environmental conditions globally by 2030 [118, 119], with a wealth of implications for AI and also specifically for AI4EO [106]. Here, we take the broadest possible standpoint, including the intrinsic sustainability of AI4EO workflows and the external impacts for all three SDG dimensions. Given that"
+    },
+    {
+     "source": "AI Security for Geoscience and Remote Sensing- Challenges and Future Trends.pdf",
+     "content": "of Geog- raphy and Environment, University of Southampton, SO17 1BJ Southampton, U.K. (e-mail: pma@lancaster.ac.uk). P. Ghamisi is also with Helmholtz-Zentrum Dresden-Rossendorf, Helmholtz Institute Freiberg for Resource Technology, Machine Learning Group, 09599 Freiberg, Germany (e-mail: p.ghamisi@hzdr.de). Fig. 1. Overview of the research topics covered in this paper. in EO [3]. Fig. 2 shows the cumulative number of AI-related papers appearing in IEEE Geoscience and Remote Sensing Society (GRSS) publications along with ISPRS Journal of Photogrammetry and Remote Sensing and Remote Sensing of Environment in the past ten years. It is clearly apparent that the number of AI-related papers increased significantly after 2021. The successful application of AI covers almost all aspects of EO missions, from low-level vision tasks like super-resolution, denoising and inpainting, to high-level vision tasks like scene classification, object detection and semantic segmentation [4]. Table I summarizes some of the most representative tasks in the geoscience and RS field using AI techniques and reveals the increasing importance of deep learning methods such as convolutional neural networks (CNNs) in EO. Despite the great success achieved by AI techniques, related safety and security issues should not be neglected [23]. While advanced AI models like CNNs possess powerful data fitting capabilities and are designed to learn like the human brain, they usually act like black boxes, which makes it difficult to understand and explain how they work [24]. Moreover, such characteristics may lead to uncertainties, vulnerabilities and security risks, which could seriously threaten the safety and arXiv:2212.09360v2  [cs.CV]  22 Jun 2023 IEEE GEOSCIENCE AND REMOTE SENSING MAGAZINE, JUNE 2023 2 2013 2014 2015 2016 2017 2018 2019 2020 2021 2022 Year 0 500 1000 1500 2000Cumulative # of papers IEEE Transactions on Geoscience and Remote Sensing IEEE Journal of Selected Topics in Applied Earth"
     }
    ]
   },
@@ -233,570 +356,108 @@ window.BENCHMARK_DATA = {
     "year": "2026",
     "abstract": "Accurate wetland mapping is critical for ecosystem monitoring and management, yet acquiring dense pixel-level annotations is prohibitively costly. In practice, only sparse point labels are typically available. Existing deep learning-based models face significant challenges in capturing accurate wetland extents under such weak supervision, particularly when coupled with the strong seasonal dynamics of wetlands, which, meanwhile, makes single-date imagery insufficient and causing substantial omission and commission errors when mapping. Although powerful foundation models like the Segment Anything Model (SAM) provide promising generalization from point prompts, it is intrinsically designed for static natural images, resulting in spatially fragmented masks in heterogeneous wetland environments and cannot exploit satellite image time series. To address these challenges, we propose WetSAM, a novel SAM-based framework that effectively leverages satellite image time series to enhance wetland mapping from sparse point annotations. WetSAM adopts a dual-branch design: (1) The temporal branch extends SAM to learn temporal contexts from satellite image time series via hierarchical adapters and a dynamic temporal aggregation module. This branch equips SAM with the ability to capture and model temporal features of wetlands, allowing it to learn complex temporal patterns and phenological changes; (2) The spatial branch reconstructs distinct boundaries via a temporal-constrained region-growin"
    },
-   "report": "",
+   "report": "The paper presents a technical framework designed for scalable, low-cost wetland mapping at high spatial resolutions. By focusing on process automation that requires minimal labeling effort and reduced human intervention, the methodology directly touches upon ethical considerations regarding human oversight in algorithmic processing. Additionally, the framework utilizes a temporal aggregation module to capture transient events such as sudden flooding, a capability that intersects with the sensitive domain of monitoring natural hazards affecting human populations near riverine and coastal margins.\n\nThe auditor identifies one strongly grounded, instantiated ethical risk within this methodology: the paper's core technical feature of process automation with reduced human intervention directly promotes automation bias. Because the framework actively relies on minimal human labeling to achieve its scalability, this bias mechanism is an instantiated finding for this specific paper. Beyond this direct finding, the auditor notes a moderate, potential disclosure associated with this class of technology. In general, automation bias has the potential to cause the misinterpretation or misuse of remote sensing data, which could theoretically lead to physical harm when applied to natural hazard monitoring. However, this downstream impact is strictly a potential, category-level risk rather than an outcome triggered by the paper itself, and it is entirely conditional upon operators overrelying on the AI results without integrating necessary local expertise.\n\nThe analyzed text does not present any instantiated mitigations to neutralize the identified automation bias or prevent the potential misuse of the system's outputs. In the overall judgment of the auditor, the paper directly instantiates a single, strongly grounded risk regarding the fundamental introduction of automation bias via its automated, low-intervention workflow. The subsequent, more severe ethical impact of physical harm resulting from misinterpreted hazard data remains solely a disclosed potential risk, emphasizing the ongoing necessity of maintaining contextual human expertise in real-world deployments.\n\n---\nAppendix: structured audit triples\n\nGeoAI Ethics Audit Report (triple-based)\n\n- (process automation with reduced human intervention:TechnicalFeature) --PROMOTES--> (automation bias:RiskMechanism)  <graph_exact | quote✓ | AUDIT>\n- (automation bias:RiskMechanism) --PROMOTES--> (misinterpretation or misuse of remote sensing data:EthicalImpact) [PhysicalHarm]  <graph_exact | quote✗ | disclosure>  (when: Overreliance on AI results without local expertise)\n\nEntities by type:\n  TechnicalFeature: process automation with reduced human intervention\n  RiskMechanism: automation bias\n  EthicalImpact: misinterpretation or misuse of remote sensing data",
    "triples": [
     {
      "head": {
       "entity": "process automation with reduced human intervention",
-      "type": "TechnicalFeature",
-      "harm_family": null
+      "type": "TechnicalFeature"
      },
      "edge": {
       "relation_type": "PROMOTES",
       "condition": "",
-      "evidence": "The framework automates the generation of dense pixel-level mappings from sparse point labels, significantly reducing the human intervention and annotation effort required for wetland monitoring.",
+      "evidence": "The WetSAM framework heavily automates the process of wetland mapping by converting sparse point annotations into dense pseudo-labels, significantly reducing the necessity for manual, pixel-level human annotation.",
       "input_quote": "With minimal labeling effort, our framework shows strong generalization ability and holds promise for scalable, low-cost wetland mapping at high spatial resolutions.",
       "provenance": "graph_exact",
       "quote_verified": true,
-      "instantiation": "POTENTIAL",
-      "instantiation_quote": "",
-      "instantiation_verified": false
+      "instantiation": "INSTANTIATED",
+      "instantiation_model_label": "INSTANTIATED",
+      "instantiation_downgraded": false,
+      "instantiation_quote": "With minimal labeling effort, our framework shows strong generalization ability and holds promise for scalable, low-cost wetland mapping at high spatial resolutions.",
+      "instantiation_verified": true
      },
      "tail": {
-      "entity": "bias",
+      "entity": "automation bias",
       "type": "RiskMechanism",
       "harm_family": null
      },
      "chain_id": "audit::chain000",
-     "tid": "003#0"
+     "tid": "10.1016/j.isprsjprs.2026.05.017#0"
     },
     {
      "head": {
-      "entity": "bias",
-      "type": "RiskMechanism",
-      "harm_family": null
+      "entity": "automation bias",
+      "type": "RiskMechanism"
      },
      "edge": {
       "relation_type": "PROMOTES",
       "condition": "Overreliance on AI results without local expertise",
-      "evidence": "By deploying the automated model in data-scarce regions specifically as a substitute for expensive local field surveys, there is a risk of overreliance on the AI's generalizations. If biases exist in the learned temporal features, it leads to the misinterpretation of remote sensing data and subsequent misallocation of conservation resources.",
-      "input_quote": "Enables high-resolution (10m) environmental monitoring in data-scarce or developing regions where expensive field surveys are not feasible.",
+      "evidence": "By replacing professional surveys with automated pseudo-labels in data-scarce areas, there is a risk that authorities may blindly trust the AI's detection of sudden flooding or wetland boundaries. Without proper local validation, this can lead to disastrous mismanagement of natural hazards and resource allocation, threatening the safety of nearby human populations.",
+      "input_quote": "The ability to capture \"transient events\" like sudden flooding via the temporal aggregation module has direct implications for monitoring natural hazards affecting human populations near riverine and coastal margins.",
       "provenance": "graph_exact",
       "quote_verified": false,
       "instantiation": "POTENTIAL",
+      "instantiation_model_label": "POTENTIAL",
+      "instantiation_downgraded": false,
       "instantiation_quote": "",
       "instantiation_verified": false
      },
      "tail": {
       "entity": "misinterpretation or misuse of remote sensing data",
       "type": "EthicalImpact",
-      "harm_family": "EconomicLoss"
-     },
-     "chain_id": "audit::chain000",
-     "tid": "003#1"
-    },
-    {
-     "head": {
-      "entity": "geoai foundation models",
-      "type": "TechnicalFeature",
-      "harm_family": null
-     },
-     "edge": {
-      "relation_type": "PROMOTES",
-      "condition": "During pre-training and fine-tuning stages with geospatial data",
-      "evidence": "WetSAM leverages and adapts the Segment Anything Model (SAM)—a foundation model—using multi-temporal geospatial data. This adaptation allows the model to actively capture and disclose nuanced, high-frequency spatial patterns, such as human interventions.",
-      "input_quote": "The temporal branch extends SAM to learn temporal contexts from satellite image time series via hierarchical adapters and a dynamic temporal aggregation module.",
-      "provenance": "graph_exact",
-      "quote_verified": true,
-      "instantiation": "POTENTIAL",
-      "instantiation_quote": "",
-      "instantiation_verified": false
-     },
-     "tail": {
-      "entity": "disclosure of sensitive geospatial data",
-      "type": "RiskMechanism",
-      "harm_family": null
-     },
-     "chain_id": "audit::chain001",
-     "tid": "003#2"
-    },
-    {
-     "head": {
-      "entity": "structured evaluation framework and quantifiable metrics",
-      "type": "Mitigation",
-      "harm_family": null
-     },
-     "edge": {
-      "relation_type": "INHIBITS",
-      "condition": "Implementation during AI development and deployment",
-      "evidence": "To ensure model reliability and generalizability while inhibiting omission or commission errors, the researchers evaluate the framework across multiple distinct global ecosystems using quantifiable performance metrics like the F1-score.",
-      "input_quote": "We validate the effectiveness of WetSAM across eight diverse global locations, each covering an area of around 5000 $km^2$ and with various wetland types and geographical features. WetSAM reaches an average F1-score of 85.58%, considerably outperforming other state-of-the-art algorithms.",
-      "provenance": "graph_exact",
-      "quote_verified": true,
-      "instantiation": "POTENTIAL",
-      "instantiation_quote": "",
-      "instantiation_verified": false
-     },
-     "tail": {
-      "entity": "unintentional biases and ethical risks in remote sensing",
-      "type": "RiskMechanism",
-      "harm_family": null
-     },
-     "chain_id": "audit::chain002",
-     "tid": "003#3"
-    }
-   ]
-  },
-  {
-   "id": "004",
-   "source": {
-    "title": "Enhanced daily retrieval of Evapotranspiration from a Transformer-based deep learning model combined with satellite passive microwave and optical observations",
-    "doi": "10.1016/j.isprsjprs.2026.05.027",
-    "doi_url": "https://doi.org/10.1016/j.isprsjprs.2026.05.027",
-    "journal": "ISPRS Journal of Photogrammetry and Remote Sensing",
-    "year": "2026",
-    "abstract": "Evapotranspiration (ET) is a key component influencing Earth’s hydrological cycle and energy balance. Although the integration of deep learning models with multi-source remote sensing data represents a cutting-edge approach for quantitative ET retrieval from end-to-end, few studies have developed a daily-scale deep-learning model driven simultaneously by satellite multi-channel passive microwave and optical observations. This study proposed a novel lightweight model to achieve daily ET estimations, which combined convolutional neural networks (CNNs) for local temporal feature extractions and Transformer’s self-attention mechanism for long-term temporal dependencies. We employed Chinese Fengyun-3D satellite passive microwave Emissivity Difference Vegetation Indices (EDVIs) at X-, Ku-, and Ka- bands as the indicator of hierarchical vegetation water content, and MODIS optical Enhanced Vegetation Index (EVI) as proxy of greenness foliage, which offered distinct and complementary vegetation characteristics for the model learning. The hybrid CNN-Transformer model was trained and tested over 108 global forest, cropland, wetland, savanna and grassland flux sites, and compared with three widely-used deep learning models (Transformer, CNN-LSTM, and LSTM). Results indicated that the CNN-Transformer model achieved daily ET estimation with an overall root mean square error (RMSE) &lt; 35% and bias &lt; 5%, particularly in the Northern Hemisphere (R2 = 0.86, RMSE = 0.52 mm day⁻1 or 34%). T"
-   },
-   "report": "",
-   "triples": []
-  },
-  {
-   "id": "005",
-   "source": {
-    "title": "XFuse: Multi-sensor CNN transformer fusion with cross attention and quality aware curriculum learning for high resolution fractional snow cover mapping",
-    "doi": "10.1016/j.isprsjprs.2026.05.028",
-    "doi_url": "https://doi.org/10.1016/j.isprsjprs.2026.05.028",
-    "journal": "ISPRS Journal of Photogrammetry and Remote Sensing",
-    "year": "2026",
-    "abstract": "Accurate fractional snow cover (FSC) mapping requires combining the complementary strengths of optical imagery (spectral discrimination) and Synthetic Aperture Radar (all-weather capability). Yet existing fusion approaches employ simplistic concatenation strategies that fail to capture complex inter-modal relationships, while taking into account the resolution mismatch between high-resolution inputs and coarse reference labels. This paper introduces XFuse, a hybrid CNN-Transformer architecture that addresses these challenges through three key contributions: (1) bidirectional cross-attention fusion that explicitly models SAR-optical interdependencies via query-key–value transformations, enabling each modality to selectively attend to complementary information from the other; (2) a multi-resolution training strategy ( 10 m → 60 m → 10 m ) that fuses Sentinel-1/2 features at native resolution, aggregates to 60 m for supervision against Gap-Filled Fractional Snow Cover (GFSC) labels, and disaggregates through guided upsampling to restore fine spatial structure at 10 m ; and (3) quality-aware curriculum learning that incorporates multi-source metadata (cloud masks, atmospheric parameters, quality control flags) through adaptive loss weighting, enabling robust training from heterogeneous satellite data while providing calibrated uncertainty estimates. Evaluation on 29 Sentinel-1/2 tiles from Northern Finland (18,117 test patches from 4 geographically unseen tiles) demonstrates stat"
-   },
-   "report": "",
-   "triples": [
-    {
-     "head": {
-      "entity": "uncertainty quantification",
-      "type": "Mitigation"
-     },
-     "edge": {
-      "relation_type": "INHIBITS",
-      "condition": "high-risk remote sensing applications",
-      "evidence": "The model mitigates unreliability in high-risk remote sensing applications by incorporating a dedicated head to compute calibrated pixel-wise uncertainty estimates.",
-      "input_quote": "A dedicated head using negative log-likelihood (NLL) to provide pixel-wise uncertainty estimates (calibrated via Expected Calibration Error).",
-      "provenance": "graph_exact",
-      "quote_verified": false,
-      "instantiation": "POTENTIAL",
-      "instantiation_quote": "",
-      "instantiation_verified": false
-     },
-     "tail": {
-      "entity": "unreliability of algorithmic predictions in safety-critical tasks",
-      "type": "RiskMechanism",
-      "harm_family": null
-     },
-     "chain_id": "audit::chain000",
-     "tid": "005#0"
-    },
-    {
-     "head": {
-      "entity": "unreliability of algorithmic predictions in safety-critical tasks",
-      "type": "RiskMechanism"
-     },
-     "edge": {
-      "relation_type": "PROMOTES",
-      "condition": "Earth observation imaging process",
-      "evidence": "In earth observation processes, unreliable algorithmic predictions can compromise safety-critical monitoring tasks such as avalanche risk assessment and flood forecasting, leading to systemic failures.",
-      "input_quote": "The uncertainty-aware maps and high-resolution boundary detection are identified as tools for avalanche risk assessment.",
-      "provenance": "graph_exact",
-      "quote_verified": false,
-      "instantiation": "POTENTIAL",
-      "instantiation_quote": "",
-      "instantiation_verified": false
-     },
-     "tail": {
-      "entity": "systemic failure in disaster or safety monitoring",
-      "type": "EthicalImpact",
       "harm_family": "PhysicalHarm"
      },
      "chain_id": "audit::chain000",
-     "tid": "005#1"
+     "tid": "10.1016/j.isprsjprs.2026.05.017#1"
     }
-   ]
-  },
-  {
-   "id": "006",
-   "source": {
-    "title": "Geographically-weighted weakly supervised Bayesian High-Resolution Transformer for 200 m resolution pan-Arctic sea ice concentration mapping and uncertainty estimation using Sentinel-1, RCM, and AMSR2 data",
-    "doi": "10.1016/j.isprsjprs.2026.05.032",
-    "doi_url": "https://doi.org/10.1016/j.isprsjprs.2026.05.032",
-    "journal": "ISPRS Journal of Photogrammetry and Remote Sensing",
-    "year": "2026",
-    "abstract": "Although high-resolution mapping of pan-Arctic sea ice with reliable corresponding uncertainty is essential for operational sea ice concentration (SIC) charting, it is a difficult task due to the subtle nature of ice signature features, inexact SIC labels, model uncertainty, and data heterogeneity. This study presents a novel Bayesian High-Resolution Transformer approach for 200-meter resolution pan-Arctic SIC mapping and uncertainty quantification using Sentinel-1, RADARSAT Constellation Mission (RCM), and Advanced Microwave Scanning Radiometer 2 (AMSR2) data. First, we design a high-resolution Transformer with global and local modules to better detect subtle sea ice features. Second, to address low-resolution, inexact SIC labels, we introduce a geographically weighted weakly supervised loss that trains at the region level rather than pixel level, prioritizing pure open water and ice pack signatures while mitigating the impact of ambiguity in the marginal ice zone. Third, we design a Bayesian extension of the proposed Transformer that treats model parameters as random variables to better quantify epistemic uncertainty. Fourth, we fuse the three data sources (Sentinel-1, RCM, and AMSR2) at the decision level to provide pan-Arctic SIC and uncertainty maps. The proposed approach is evaluated under pan-Arctic minimum-extent and melt season conditions in 2021 and 2025. Our model achieves high-resolution SIC maps with up to 200-meter spatial resolution, 0.70 overall feature detect"
-   },
-   "report": "",
-   "triples": [
+   ],
+   "graph_paths": [
+    "(re-identification risk:RiskMechanism) --[PROMOTES | Condition: When de-identification is insufficient to protect sensitive location traces | When anonymous datasets are publicly shared without sufficient protection]--> (privacy violation:EthicalImpact)",
+    "(disclosure of sensitive geospatial data:RiskMechanism) --[PROMOTES | Condition: non-public data associated with industry or national security | When exposing home locations, workspaces, and daily trajectories]--> (location privacy violation:EthicalImpact)",
+    "(privacy violation:EthicalImpact) --[PROMOTES | Condition: non-public data associated with industry or national security | When exposing home locations, workspaces, and daily trajectories]--> (privacy violation:EthicalImpact)",
+    "(oppressive surveillance:RiskMechanism) --[PROMOTES | Condition: When humanitarian data serves the intelligence needs of antagonists]--> (targeting of vulnerable communities for harm:EthicalImpact)",
+    "(algorithmic bias:RiskMechanism) --[PROMOTES | Condition: When data excludes children, older adults, homeless individuals, or people with disabilities.]--> (marginalization and exclusion:EthicalImpact)",
+    "(User privacy protection methods:Mitigation) --[INHIBITS | Condition: In human mobility studies seeking to balance data utility and privacy]--> (disclosure of sensitive geospatial data:RiskMechanism)",
+    "(process automation with reduced human intervention:TechnicalFeature) --[PROMOTES]--> (automation bias:RiskMechanism)",
+    "(public sharing of personal vehicle trajectory data:TechnicalFeature) --[PROMOTES]--> (privacy violation:EthicalImpact)",
+    "(federated learning:Mitigation) --[INHIBITS | Condition: decentralized data distribution]--> (disclosure of sensitive geospatial data:RiskMechanism)",
+    "(deep-learning algorithm for image segmentation beam:TechnicalFeature) --[PROMOTES | Condition: When training data is specific to informal dwellings but applied to formal or industrial city areas.]--> (algorithmic focus bias:RiskMechanism)",
+    "(bias:RiskMechanism) --[PROMOTES | Condition: Overreliance on AI results without local expertise]--> (misinterpretation or misuse of remote sensing data:EthicalImpact)",
+    "(minimal data collection:Mitigation) --[INHIBITS | Condition: When limiting spatial and temporal granularity]--> (re-identification and linkage:RiskMechanism)",
+    "(oppressive surveillance:RiskMechanism) --[PROMOTES | Condition: Authoritarian contexts]--> (violation of political liberties and freedom of speech:EthicalImpact)",
+    "(deep-learning algorithm for image segmentation beam:TechnicalFeature) --[PROMOTES | Condition: When training data is specific to informal dwellings but applied to formal or industrial city areas.]--> (algorithmic bias:RiskMechanism)",
+    "(vgi and opportunistic data collection:TechnicalFeature) --[PROMOTES | Condition: When data collection depends on access to technology like smartphones or interest in volunteering data.]--> (algorithmic bias:RiskMechanism)",
+    "(neighborhood representation bias:RiskMechanism) --[PROMOTES | Condition: Neighborhood level]--> (biased law enforcement outcomes:EthicalImpact)",
+    "(spatio-temporal predictive policing:TechnicalFeature) --[PROMOTES | Condition: Neighborhood level]--> (neighborhood representation bias:RiskMechanism)",
+    "(computer vision:TechnicalFeature) --[PROMOTES | Condition: Identity authentication at borders or on devices]--> (algorithmic bias:RiskMechanism)",
+    "(re-identification and linkage:RiskMechanism) --[PROMOTES]--> (privacy violation:EthicalImpact)",
+    "(ai-driven building detection and classification from remote sensing data:TechnicalFeature) --[PROMOTES | Condition: When training data contains sample imbalances for specific infrastructure types]--> (misclassification of heterogeneous roof types:RiskMechanism)",
+    "(re-identification and linkage:RiskMechanism) --[PROMOTES]--> (location privacy violation:EthicalImpact)",
+    "(surveillance and tracking measures:TechnicalFeature) --[PROMOTES | Condition: During the COVID-19 pandemic]--> (privacy violation:EthicalImpact)",
+    "(geospatial data features:TechnicalFeature) --[PROMOTES | Condition: If geodata is not handled appropriately.]--> (privacy violation:EthicalImpact)",
+    "(ai technology:TechnicalFeature) --[PROMOTES | Condition: Development lacking integration with the humanities]--> (bias:RiskMechanism)",
+    "(geoai surveillance systems:TechnicalFeature) --[PROMOTES]--> (surveillance and tracking:RiskMechanism)",
+    "(process automation with reduced human intervention:TechnicalFeature) --[PROMOTES]--> (bias:RiskMechanism)",
+    "(sparse spatiotemporal traces:TechnicalFeature) --[PROMOTES]--> (re-identification and linkage:RiskMechanism)",
+    "(misclassification of heterogeneous roof types:RiskMechanism) --[PROMOTES | Condition: When roof typology is used as a proxy for socio-economic status]--> (discriminatory resource allocation in humanitarian aid:EthicalImpact)",
+    "(Geomasking and spatial-temporal cloaking:Mitigation) --[INHIBITS]--> (disclosure of sensitive geospatial data:RiskMechanism)",
+    "(misclassification of heterogeneous roof types:RiskMechanism) --[PROMOTES | Condition: When roof typology is used as a proxy for socio-economic status]--> (resource allocation inequality:EthicalImpact)",
+    "(privacy violation:EthicalImpact) --[PROMOTES | Condition: When vulnerable populations are involved]--> (harm to vulnerable populations:EthicalImpact)",
+    "(geoai foundation models:TechnicalFeature) --[PROMOTES | Condition: During pre-training and fine-tuning stages with geospatial data]--> (disclosure of sensitive geospatial data:RiskMechanism)",
+    "(automation bias:RiskMechanism) --[PROMOTES | Condition: Overreliance on AI results without local expertise]--> (misinterpretation or misuse of remote sensing data:EthicalImpact)"
+   ],
+   "track2_docs": [
     {
-     "head": {
-      "entity": "uncertainty quantification",
-      "type": "Mitigation",
-      "harm_family": null
-     },
-     "edge": {
-      "relation_type": "INHIBITS",
-      "condition": "high-risk remote sensing applications",
-      "evidence": "The research integrates uncertainty quantification through a Bayesian Neural Network extension to calculate reliable epistemic uncertainties, reducing the unreliability of the model in critical Earth observation applications.",
-      "input_quote": "A Bayesian Neural Network (BNN) extension using Bayes-by-backpropagation (BBB). It treats model parameters as random variables with a diagonal, mean-field Gaussian variational posterior, enabling the calculation of epistemic uncertainty via stochastic inferences and the reparameterization trick.",
-      "provenance": "graph_exact",
-      "quote_verified": false,
-      "instantiation": "POTENTIAL",
-      "instantiation_quote": "",
-      "instantiation_verified": false
-     },
-     "tail": {
-      "entity": "unreliability of algorithmic predictions in safety-critical tasks",
-      "type": "RiskMechanism",
-      "harm_family": null
-     },
-     "chain_id": "audit::chain000",
-     "tid": "006#0"
+     "source": "RESPONSIBLE AI FOR EARTH OBSERVATION.pdf",
+     "content": "EO data well [68]. It has been argued that the AI/ML community urgently needs to recognize the distinct features of satellite-based EO data and to “move out of the comfort zone” of applying AI methods established in other domains without improved adaptation to EO or satellite data machine learning (SatML, [68]). The reasons are manifold as, for example: • Satellite data is rarely “analysis-ready data” (ARD) [107]), requiring state-of-the-art preprocessing to repre- sent the same values for the same features in different images, i.e., to avoid pseudo-variance. 13 Responsible AI for Earth Observation A PREPRINT • Spatial autocorrelation according to Tobler’s first law of geography [108] is rarely used to improve AI4EO, even less so newer concepts like Partitioned Autoregressive Time-Series (PARTS) that consider both spatial and temporal autocorrelation in a congruent fashion [95] • Satellite data provide a wide range of spatial resolutions (from very-fine-resolution to pixels of several km2) and extend across all scales to be observed (from local, fine-scale objects in urban environments to global phenomena). Both very diverse spatial detail and multi-scale research ask for adapted solutions. • Different temporal resolutions, i.e., data densities over time, represent the same land surface differently. In other words, change analyses over years or decades are far from trivial, and need contextualization [96, 109]. This is even more important when phenology is considered and specific temporal windows across the seasons are crucial to identify the relevant phenomena, e.g. different crop types, land use intensities or tree species separable only at certain phenological stages [110–112]. • Most AI algorithms for image analyses were developed on three-band red-green-blue (RGB) imagery, often based on VHR drone data. Today’s multi- to hyperspectral satellite data ask for more sophisticated approaches to detect not just the obvious, but the relevant. This is aggravated by"
     },
     {
-     "head": {
-      "entity": "unreliability of algorithmic predictions in safety-critical tasks",
-      "type": "RiskMechanism",
-      "harm_family": null
-     },
-     "edge": {
-      "relation_type": "PROMOTES",
-      "condition": "Earth observation imaging process",
-      "evidence": "In the context of pan-Arctic mapping, unreliable algorithmic predictions would fail to detect small-scale hazards, leading to a systemic failure in safety monitoring that threatens maritime vessels and human safety.",
-      "input_quote": "By detecting small-scale hazardous features like ice floes and leads at 200m resolution, the technology directly supports the safety of vessels in Arctic waters.",
-      "provenance": "graph_exact",
-      "quote_verified": false,
-      "instantiation": "POTENTIAL",
-      "instantiation_quote": "",
-      "instantiation_verified": false
-     },
-     "tail": {
-      "entity": "systemic failure in disaster or safety monitoring",
-      "type": "EthicalImpact",
-      "harm_family": "PhysicalHarm"
-     },
-     "chain_id": "audit::chain000",
-     "tid": "006#1"
-    }
-   ]
-  },
-  {
-   "id": "007",
-   "source": {
-    "title": "TMF: Temporal multi-modal fusion framework for estimating wheat yield from multi-source satellite and environmental data across the European Union",
-    "doi": "10.1016/j.isprsjprs.2026.05.041",
-    "doi_url": "https://doi.org/10.1016/j.isprsjprs.2026.05.041",
-    "journal": "ISPRS Journal of Photogrammetry and Remote Sensing",
-    "year": "2026",
-    "abstract": "Accurate large-scale crop yield estimation is critical for agricultural management and advance warning of potentially compromised food security. While recent advances in remote sensing provide diverse data sources for crop monitoring, effectively integrating these data sources for accurate yield estimation at the continental scale remains challenging due to complex crop-environment interactions and high spatial heterogeneity. In this study, we developed a Temporal Multi-modal Fusion (TMF) framework for end-of-season wheat yield estimation at the sub-national level across the European Union from 2001 to 2019. Our framework integrated time-series data across the entire growing season from climate variables, satellite-based remote sensing measurements including vegetation indices (e.g., Enhanced Vegetation Index) and productivity indicators (e.g., Solar-Induced Fluorescence, Gross Primary Productivity), and static soil properties. By employing parallel transformer encoders followed by a late-fusion strategy, our architecture preserves modality-specific temporal dynamics before explicitly anchoring them against static spatial constraints. Leave-one-year-out cross-validation demonstrated that the TMF framework achieved accurate yield estimation with an RMSE of 0.75 Mg·ha−1, 7–38% lower than baseline models (LSTM, GBRT, RF, and ANN). The model demonstrated better spatial stability and captured severe yield anomalies during extreme climate events (e.g., the 2003 and 2018 droughts). "
-   },
-   "report": "",
-   "triples": [
-    {
-     "head": {
-      "entity": "hierarchical deep learning architecture",
-      "type": "TechnicalFeature"
-     },
-     "edge": {
-      "relation_type": "PROMOTES",
-      "condition": "When deployed for complex, multi-modal continental-scale agricultural modeling",
-      "evidence": "Complex multi-modal neural network architectures inherently lack transparency, acting as opaque systems that hide how specific variables influence yield predictions.",
-      "input_quote": "Temporal Multi-modal Fusion (TMF) framework, a hierarchical deep learning architecture.",
-      "provenance": "graph_anchored",
-      "quote_verified": false,
-      "instantiation": "POTENTIAL",
-      "instantiation_quote": "",
-      "instantiation_verified": false
-     },
-     "tail": {
-      "entity": "model opacity and lack of interpretability",
-      "type": "RiskMechanism",
-      "harm_family": null
-     },
-     "chain_id": "audit::chain000",
-     "tid": "007#0"
+     "source": "AI Security for Geoscience and Remote Sensing- Challenges and Future Trends.pdf",
+     "content": "[122]. For example, a training iteration using IEEE GEOSCIENCE AND REMOTE SENSING MAGAZINE, JUNE 2023 12 TABLE IV AN OVERVIEW OF UNCERTAINTY QUANTIFICATION METHODS Deterministic Models Bayesian Inference Prior Network-based Methods Ensemble Methods Monte Carlo Methods External Methods Description Uncertainty distributions are cal- culated from the density of pre- dicted probabilities represented by prior distributions with tractable properties over categorical distri- bution. Predictions are obtained by aver- aging over a series of predictions of the ensembles, while the uncer- tainty is quantified based on their variety. Uncertainty distribution over pre- dictions is calculated by Bayes theorem based on the Monte Carlo approximation of the distri- butions over Bayesian model pa- rameters. The mean and standard deviation values of the prediction are di- rectly output simultaneously using external modules. Optimization Strategy Kullback-Leibler divergence Cross-entropy loss Cross-entropy loss and Kullback-Leibler divergence Depends on method Uncertainty Sources Data Data Model Model AI Techniques Deterministic Networks Deterministic Networks Bayesian Networks Bayesian Networks References [112] [113] [114] [115] [116] [117] [118] [119] [120] [121] the SGD optimizer [123] can be defined as follows: θi+1 = θi − ηi∇L(θi), (10) where θi represent the model parameters in the i-th iteration, L denotes the loss function, and η is the learning rate. Specifically, in a model training iteration, the amplitude of each update step is controlled by the learning rate η, while the gradient descent of the loss functions determines the directions. Concerning the model updates in a whole epoch, batch size determines the volume of samples to be calculated in the loss functions in each training iteration. Due to the heterogeneity of the training data, each sample of the whole training batch may be calculated into different optimization directions, which combines to an uncertain result"
     },
     {
-     "head": {
-      "entity": "SHAP-based interpretability analysis",
-      "type": "Mitigation"
-     },
-     "edge": {
-      "relation_type": "INHIBITS",
-      "condition": "By analyzing feature importance during critical crop phenological stages",
-      "evidence": "The framework uses SHAP to quantify marginal contributions of different input variables, mitigating black-box opacity and providing feature-level transparency.",
-      "input_quote": "SHAP (SHapley Additive exPlanations) for feature-level interpretability and quantifying marginal contributions of variables.",
-      "provenance": "graph_anchored",
-      "quote_verified": false,
-      "instantiation": "POTENTIAL",
-      "instantiation_quote": "",
-      "instantiation_verified": false
-     },
-     "tail": {
-      "entity": "model opacity and lack of interpretability",
-      "type": "RiskMechanism",
-      "harm_family": null
-     },
-     "chain_id": "audit::chain000",
-     "tid": "007#1"
-    },
-    {
-     "head": {
-      "entity": "model opacity and lack of interpretability",
-      "type": "RiskMechanism"
-     },
-     "edge": {
-      "relation_type": "PROMOTES",
-      "condition": "When insights are utilized by stakeholders for sub-national decision making",
-      "evidence": "Uninterpretable model outputs could cause stakeholders to misunderstand the drivers of yield variations, resulting in flawed data-driven policies that negatively impact agricultural economies.",
-      "input_quote": "Supports the development of data-driven agricultural management and regional policy interventions at the NUTS sub-national level.",
-      "provenance": "graph_anchored",
-      "quote_verified": false,
-      "instantiation": "POTENTIAL",
-      "instantiation_quote": "",
-      "instantiation_verified": false
-     },
-     "tail": {
-      "entity": "inappropriate policy decisions impacting communities",
-      "type": "EthicalImpact",
-      "harm_family": "EconomicLoss"
-     },
-     "chain_id": "audit::chain000",
-     "tid": "007#2"
-    },
-    {
-     "head": {
-      "entity": "continental-scale crop yield estimation",
-      "type": "TechnicalFeature"
-     },
-     "edge": {
-      "relation_type": "PROMOTES",
-      "condition": "Due to complex crop-environment interactions and high spatial heterogeneity across regions",
-      "evidence": "Modeling yields at a massive continental scale risks averaging out local nuances, which can obscure critical sub-national or regional agricultural disparities.",
-      "input_quote": "effectively integrating these data sources for accurate yield estimation at the continental scale remains challenging due to complex crop-environment interactions and high spatial heterogeneity.",
-      "provenance": "inferred",
-      "quote_verified": true,
-      "instantiation": "POTENTIAL",
-      "instantiation_quote": "",
-      "instantiation_verified": false
-     },
-     "tail": {
-      "entity": "masking of subpopulation conditions",
-      "type": "RiskMechanism",
-      "harm_family": null
-     },
-     "chain_id": "audit::chain001",
-     "tid": "007#3"
-    },
-    {
-     "head": {
-      "entity": "integration of static soil properties",
-      "type": "Mitigation"
-     },
-     "edge": {
-      "relation_type": "INHIBITS",
-      "condition": "By complementing dynamic satellite data with localized, spatially structured constraints",
-      "evidence": "Incorporating high-resolution static soil data grounds the model locally, preventing the homogenization of predictions and ensuring heterogeneous spatial conditions are accurately represented.",
-      "input_quote": "Although satellite-derived measurements effectively capture seasonal canopy dynamics and interannual yield fluctuations, static soil properties provide complementary spatially structured information for yield estimation.",
-      "provenance": "inferred",
-      "quote_verified": true,
-      "instantiation": "POTENTIAL",
-      "instantiation_quote": "",
-      "instantiation_verified": false
-     },
-     "tail": {
-      "entity": "masking of subpopulation conditions",
-      "type": "RiskMechanism",
-      "harm_family": null
-     },
-     "chain_id": "audit::chain001",
-     "tid": "007#4"
-    },
-    {
-     "head": {
-      "entity": "masking of subpopulation conditions",
-      "type": "RiskMechanism"
-     },
-     "edge": {
-      "relation_type": "PROMOTES",
-      "condition": "When determining regions requiring infrastructure improvements or interventions",
-      "evidence": "Failing to account for local heterogeneity could cause regional yield gaps to be overlooked, leading to misdirected financial investments and structural neglect in vulnerable agricultural zones.",
-      "input_quote": "By identifying regions with stagnating yields (e.g., parts of Western Europe) versus those with closing yield gaps (e.g., Baltic countries), the technology can inform targeted investments in agricultural infrastructure or soil health management.",
-      "provenance": "graph_exact",
-      "quote_verified": false,
-      "instantiation": "POTENTIAL",
-      "instantiation_quote": "",
-      "instantiation_verified": false
-     },
-     "tail": {
-      "entity": "policy-level harm",
-      "type": "EthicalImpact",
-      "harm_family": "EconomicLoss"
-     },
-     "chain_id": "audit::chain001",
-     "tid": "007#5"
-    }
-   ]
-  },
-  {
-   "id": "008",
-   "source": {
-    "title": "Relative Energy Learning for LiDAR out-of-distribution detection",
-    "doi": "10.1016/j.isprsjprs.2026.05.051",
-    "doi_url": "https://doi.org/10.1016/j.isprsjprs.2026.05.051",
-    "journal": "ISPRS Journal of Photogrammetry and Remote Sensing",
-    "year": "2026",
-    "abstract": "LiDAR perception is central to GeoAI applications such as autonomous driving. However, current LiDAR perception models are trained under a closed-set assumption and remain vulnerable to out-of-distribution (OOD) objects that are not represented in training datasets. OOD detection is essential for trustworthy and safe AI by identifying unexpected inputs that differ from the training distribution, as it enables distinguishing rare anomalies from common classes and avoiding overconfident predictions for unknown samples. In this paper, we propose Relative Energy Learning (REL), a simple yet effective framework for OOD detection in LiDAR point clouds. REL leverages the energy gap between positive (in-distribution) and negative logits as a relative scoring function, mitigating calibration issues in raw energy values and improving robustness across various scenes. To address the absence of OOD samples during training, we propose a lightweight data synthesis strategy called Point Raise, which perturbs existing point clouds to generate auxiliary anomalies without altering the inlier semantics. Evaluated on SemanticKITTI and the Spotting the Unexpected (STU) benchmark, REL consistently outperforms existing methods by a large margin. Our results highlight that modeling relative energy, combined with simple synthetic outliers, provides a principled and scalable solution for reliable OOD detection in open-world autonomous driving. 1 1 Project Page: https://github.com/343gltysprk/rel."
-   },
-   "report": "",
-   "triples": [
-    {
-     "head": {
-      "entity": "closed-set assumption in LiDAR perception",
-      "type": "TechnicalFeature",
-      "harm_family": null
-     },
-     "edge": {
-      "relation_type": "PROMOTES",
-      "condition": "When confronted with unfamiliar structures or novel out-of-distribution objects during deployment",
-      "evidence": "Track 2 defines that LiDAR models trained under closed-set assumptions produce unreliable predictions by forcing anomalous inputs into known classes. The audited text confirms this vulnerability leads to overconfident predictions for unknown samples.",
-      "input_quote": "However, current LiDAR perception models are trained under a closed-set assumption and remain vulnerable to out-of-distribution (OOD) objects that are not represented in training datasets.",
-      "provenance": "inferred",
-      "quote_verified": true,
-      "instantiation": "POTENTIAL",
-      "instantiation_quote": "",
-      "instantiation_verified": false
-     },
-     "tail": {
-      "entity": "overconfident predictions for unknown samples",
-      "type": "RiskMechanism",
-      "harm_family": null
-     },
-     "chain_id": "audit::chain000",
-     "tid": "008#0"
-    },
-    {
-     "head": {
-      "entity": "overconfident predictions for unknown samples",
-      "type": "RiskMechanism",
-      "harm_family": null
-     },
-     "edge": {
-      "relation_type": "PROMOTES",
-      "condition": "If an OOD object is confidently interpreted as a known category and the autonomous vehicle fails to react appropriately",
-      "evidence": "Track 2 background explains that misinterpreting unexpected objects undermines system safety. The audited text explicitly acknowledges that failing to identify these safety-critical road obstacles can lead to physical collisions.",
-      "input_quote": "The primary touchpoint is the detection of \"safety-critical road obstacles\" (e.g., objects like buckets or furniture in the vehicle's path) that could lead to collisions if not identified as OOD.",
-      "provenance": "inferred",
-      "quote_verified": false,
-      "instantiation": "POTENTIAL",
-      "instantiation_quote": "",
-      "instantiation_verified": false
-     },
-     "tail": {
-      "entity": "autonomous vehicle collisions",
-      "type": "EthicalImpact",
-      "harm_family": "PhysicalHarm"
-     },
-     "chain_id": "audit::chain000",
-     "tid": "008#1"
-    },
-    {
-     "head": {
-      "entity": "Relative Energy Learning (REL) combined with Point Raise",
-      "type": "Mitigation",
-      "harm_family": null
-     },
-     "edge": {
-      "relation_type": "INHIBITS",
-      "condition": "By leveraging a relative scoring function and geometry-aware auxiliary anomaly synthesis",
-      "evidence": "The input text proposes REL and Point Raise to identify unexpected inputs and distinguish rare anomalies, effectively mitigating the risk of overconfident predictions for unknown samples.",
-      "input_quote": "OOD detection is essential for trustworthy and safe AI by identifying unexpected inputs that differ from the training distribution, as it enables distinguishing rare anomalies from common classes and avoiding overconfident predictions for unknown samples.",
-      "provenance": "inferred",
-      "quote_verified": true,
-      "instantiation": "POTENTIAL",
-      "instantiation_quote": "",
-      "instantiation_verified": false
-     },
-     "tail": {
-      "entity": "overconfident predictions for unknown samples",
-      "type": "RiskMechanism",
-      "harm_family": null
-     },
-     "chain_id": "audit::chain000",
-     "tid": "008#2"
-    }
-   ]
-  },
-  {
-   "id": "009",
-   "source": {
-    "title": "Multi-temporal calving front segmentation",
-    "doi": "10.1016/j.isprsjprs.2026.05.053",
-    "doi_url": "https://doi.org/10.1016/j.isprsjprs.2026.05.053",
-    "journal": "ISPRS Journal of Photogrammetry and Remote Sensing",
-    "year": "2026",
-    "abstract": "The calving fronts of marine-terminating glaciers undergo constant changes. These changes significantly affect the glacier’s mass and dynamics, demanding continuous monitoring. To address this need, deep learning models were developed that can automatically delineate the calving front in Synthetic Aperture Radar imagery. However, these models often struggle to correctly classify areas affected by seasonal conditions such as ice mélange or snow-covered surfaces. To address this issue, we propose to process multiple frames from a satellite image time series of the same glacier in parallel and exchange temporal information between the corresponding feature maps to stabilize each prediction. We integrate our approach into the current state-of-the-art architecture Tyrion and accomplish a new state-of-the-art performance on the CaFFe benchmark dataset. In particular, we achieve a Mean Distance Error of 184.4m and a mean Intersection over Union of 83.6 . Furthermore, we empirically demonstrate that our modifications are highly robust to seasonal conditions, achieving a Mean Distance Error of 213.0m under adverse conditions and outperforming prior state-of-the-art methods, such as Tyrion, by more than 100m. The CaFFe benchmark dataset is publicly available at https://doi.pangaea.de/10.1594/PANGAEA.940950 and the code at https://github.com/ki7077/Multi-Temporal-Tyrion."
-   },
-   "report": "",
-   "triples": []
-  },
-  {
-   "id": "010",
-   "source": {
-    "title": "EchoNet: Efficient railway segmentation from satellite imagery",
-    "doi": "10.1016/j.isprsjprs.2026.06.010",
-    "doi_url": "https://doi.org/10.1016/j.isprsjprs.2026.06.010",
-    "journal": "ISPRS Journal of Photogrammetry and Remote Sensing",
-    "year": "2026",
-    "abstract": "Accurate railway segmentation from satellite imagery is the prerequisite of transportation infrastructure mapping and monitoring, yet remains challenging due to the sparse and discontinuous geometry of rail networks, substantial intra-class texture variation, and the stringent precision required by downstream geospatial applications. This study presents EchoNet, a lightweight deep learning framework designed for efficient and accurate railway extraction, together with RailSAT, a new dataset comprising 1,250 satellite image tiles collected across the United States. The proposed architecture features a tailored decoder integrating three key components: a Semantic-guided Implicit Spatial Decoder (SISD) that restores spatial resolution through semantic-driven channel modulation without explicit upsampling; a Lite Contextual Decoder (LCD) employing dilated convolutions to capture long-range structural context; and a Pixel-wise Complementary Attention Fusion (PCAF) module that adaptively merges semantic and spatial features. With only 2.97 M parameters and 0.83 GFLOPs, EchoNet achieves an F1 score and IoU within 0.01 of mainstream baselines, while attaining a throughput of 791 images/s and a peak memory usage of 7 GB on 512 × 512 inputs with a batch size of 200 on a single NVIDIA RTX A6000 GPU. Experimental and ablation results validate the effectiveness of each decoder component. Overall, EchoNet demonstrates high accuracy and computational efficiency, offering a scalable solution"
-   },
-   "report": "",
-   "triples": [
-    {
-     "head": {
-      "entity": "black-box nature of deep neural networks",
-      "type": "TechnicalFeature",
-      "harm_family": null
-     },
-     "edge": {
-      "relation_type": "PROMOTES",
-      "condition": "",
-      "evidence": "EchoNet is introduced as a deep learning framework for semantic segmentation. The complex internal mechanics, such as the semantic-driven channel modulation in the SISD branch, inherently operate as a black box, resulting in a lack of algorithmic transparency.",
-      "input_quote": "This study presents EchoNet, a lightweight deep learning framework designed for efficient and accurate railway extraction, together with RailSAT, a new dataset comprising 1,250 satellite image tiles collected across the United States.",
-      "provenance": "graph_exact",
-      "quote_verified": true,
-      "instantiation": "POTENTIAL",
-      "instantiation_quote": "",
-      "instantiation_verified": false
-     },
-     "tail": {
-      "entity": "lack of algorithmic transparency and explainability",
-      "type": "RiskMechanism",
-      "harm_family": null
-     },
-     "chain_id": "audit::chain000",
-     "tid": "010#0"
-    },
-    {
-     "head": {
-      "entity": "lack of algorithmic transparency and explainability",
-      "type": "RiskMechanism",
-      "harm_family": null
-     },
-     "edge": {
-      "relation_type": "PROMOTES",
-      "condition": "high-risk remote sensing applications",
-      "evidence": "Applying an opaque deep learning model to railway infrastructure safety assessments represents a high-risk application. The inability to transparently verify how the model handles occluded or low-visibility regions can mask structural flaws, leading to safety risks and potential physical harm, which necessitates strict human-in-the-loop protocols.",
-      "input_quote": "The authors explicitly note that for operational use, the model output should be integrated with human verification and uncertainty filtering, especially in occluded or low-visibility regions.",
-      "provenance": "graph_exact",
-      "quote_verified": false,
-      "instantiation": "POTENTIAL",
-      "instantiation_quote": "",
-      "instantiation_verified": false
-     },
-     "tail": {
-      "entity": "safety risks in critical missions",
-      "type": "EthicalImpact",
-      "harm_family": "PhysicalHarm"
-     },
-     "chain_id": "audit::chain000",
-     "tid": "010#1"
+     "source": "AI Security for Geoscience and Remote Sensing- Challenges and Future Trends.pdf",
+     "content": "an input image x ∈ Rd, let f (θ) : x → y be a classifier mapping from the image space to the label space, where θ represents the parameters of the model in a classification problem. The predicted label ˆy for the input image x can then be obtained by ˆy = f (θ, x). Now, the explanation E : f ×Rd → Rd can be generated to describe the feature importance, contribution or relevance of that particular dimension to the class output [137]. The explanation map can be a pixel map with equal size to the input. For example, the Saliency method [139] is estimated by the gradient of the output ˆy with respect to the input x: ESaliency (ˆy, x) = ▽f (θ, x). (14) IEEE GEOSCIENCE AND REMOTE SENSING MAGAZINE, JUNE 2023 15 S2 Image Sal w. SG (0.16) DeepLift (0.15) Lime (0.08) Occlusion (0.01) Grad-CAM (0.01) 0.0 0.80.2 0.4 0.6 1.0 Fig. 13. Heatmaps of the DenseNet with different XAI algorithms for the class of Water in the SEN12MS dataset (source from [137]). Pixels that have a deeper color represent they are more likely to be interpreted as the target class. B. XAI Applications in Geoscience and RS In the quest to make AI algorithms explainable, many expla- nation methods and strategies have been proposed. Based on previously published surveys, the taxonomy of XAI algorithms can be discussed in the axis of scope and usage, respectively [136], [140], and the critical distinction of XAI algorithms is drawn in Fig. 12. • Scope: According to the scope of explanations, XAI algo- rithms can be either global or local. Globally explainable methods provide a comprehensive understanding of the entire model behavior. Locally explainable methods are designed to justify the individual feature attributions of an instance x from the data population X . Some XAI al- gorithms can be extended to both. For example, in [141], Ribeiro et al. introduced a Local Interpretable Model- Agnostic Explanation (LIME) method, which can reliably approximate any black-box classifier locally around the prediction."
     }
    ]
   }

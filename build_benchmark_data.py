@@ -1,26 +1,32 @@
 """
 build_benchmark_data.py
 =======================
-Runs the DualTrackGeoAIAgent on the 100 annotation papers
-(annotation_100_fulltext/<NNN>_<DOI>/<DOI>.xml) and dumps a PUBLIC-SAFE
-benchmark to visualization/benchmark_data.js (window.BENCHMARK_DATA), which
+Runs the DualTrackGeoAIAgent on a set of papers and dumps a PUBLIC-SAFE benchmark
+to visualization/benchmark_data.js (window.BENCHMARK_DATA), which
 benchmark_scoring.html renders for two experts to grade.
 
-Public-safe (same policy as run_example.py): per-paper we keep the audit triples
-(head/edge/tail incl. the verbatim quote snippets the audit cites), the generated
-prose report, and the paper's own title/DOI/journal/abstract. We DROP per-edge
-graph_source_docs (training-corpus filenames) and we do NOT include Track-2 raw
-excerpts or any full paper text.
+Two input layouts are auto-detected for --papers-dir:
+  * <NNN>_<DOI>/<DOI>.xml subfolders  (annotation_100_fulltext/)  -> id = NNN
+  * a flat dir of <DOI>.xml files      (data/heldout_xml/)         -> id = 001.. by name
 
-Resumable: each paper's result is checkpointed to
-artifacts/eval/annotation_100/<NNN>.json as it finishes; a rerun skips papers
+Public-safe (same policy as run_example.py): we keep the audit triples
+(head/edge/tail incl. the verbatim quote snippets the audit cites), the generated
+prose report, the Track-1 graph paths, the Track-2 retrieved chunks (text+source),
+and the paper's own title/DOI/journal/abstract. We DROP per-edge graph_source_docs
+(training-corpus filenames) and never include full paper text.
+
+Resumable: each paper's result is checkpointed under
+artifacts/eval/<papers-dir-name>/<id>.json as it finishes; a rerun skips papers
 whose checkpoint already exists. So a crash (or stopping to cap spend) mid-run is
 cheap to resume — just run the script again.
 
-    # smoke test (cheap): audit only the first 2 papers
-    python visualization/build_benchmark_data.py --limit 2
+    # seed the page from an existing benchmark raw JSON (no agent, no API calls)
+    python visualization/build_benchmark_data.py --from-raw artifacts/eval/agent_benchmark_hier_clean_raw.json
 
-    # full run (~1h, ~$30 in API calls)
+    # re-run the agent on the 10 held-out papers (captures Track 2) — cheap
+    python visualization/build_benchmark_data.py --papers-dir data/heldout_xml
+
+    # full run on the 100 annotation papers (~1h, ~$30)
     python visualization/build_benchmark_data.py
 
 Run from anywhere; it adds the repo root to sys.path so the agent's imports and
@@ -40,8 +46,7 @@ sys.path.insert(0, ROOT)
 
 DEFAULT_PAPERS_DIR = os.path.join(ROOT, "annotation_100_fulltext")
 DEFAULT_OUT = os.path.join(HERE, "benchmark_data.js")
-CHECKPOINT_DIR = os.path.join(ROOT, "artifacts", "eval", "annotation_100")
-RAW_OUT = os.path.join(ROOT, "artifacts", "eval", "annotation_100_raw.json")
+EVAL_DIR = os.path.join(ROOT, "artifacts", "eval")
 
 # Per-edge fields stripped before publishing (corpus-leakable). Mirrors run_example.py.
 DROP_EDGE_FIELDS = ("graph_source_docs",)
@@ -64,7 +69,7 @@ def extract_abstract(xml_path):
 
 def meta_from_xml(xml_path):
     """Title / journal / year straight from an Elsevier XML (for the held-out set,
-    which has no .tags.json). DOI is derived from the filename."""
+    which has no .tags.json). DOI is derived from the filename when absent."""
     raw = open(xml_path, encoding="utf-8", errors="ignore").read()
     m = re.search(r"<(?:xocs:|prism:|ce:)?doi>([^<]+)</", raw)
     doi = m.group(1).strip() if m else \
@@ -73,14 +78,15 @@ def meta_from_xml(xml_path):
     title = _strip_tags(m.group(1)) if m else ""
     m = re.search(r"<prism:publicationName>([^<]+)</", raw)
     journal = m.group(1).strip() if m else ""
-    m = re.search(r"<prism:coverDate>(\d{4})", raw) or re.search(r"<prism:coverDisplayDate>[^<]*?(\d{4})", raw)
+    m = re.search(r"<prism:coverDate>(\d{4})", raw) \
+        or re.search(r"<prism:coverDisplayDate>[^<]*?(\d{4})", raw)
     year = m.group(1) if m else ""
     return doi, title, journal, year
 
 
 def load_meta(paper_dir, xml_path):
-    """Title / DOI / journal / year — preferring the curated <DOI>.tags.json."""
-    doi = title = journal = year = ""
+    """Title / DOI / journal / year — preferring a curated <DOI>.tags.json if present,
+    else parsed straight from the XML."""
     tags = glob.glob(os.path.join(paper_dir, "*.tags.json"))
     if tags:
         try:
@@ -89,12 +95,11 @@ def load_meta(paper_dir, xml_path):
             title = (t.get("title") or "").strip()
             journal = (t.get("journal") or "").strip()
             year = str(t.get("year") or "").strip()
+            if doi or title:
+                return doi, title, journal, year
         except Exception:
             pass
-    if not doi:
-        base = os.path.basename(xml_path).replace(".xml", "")
-        doi = base.replace("_", "/", 1)
-    return doi, title, journal, year
+    return meta_from_xml(xml_path)
 
 
 def clean_triples(triples):
@@ -110,7 +115,12 @@ def clean_triples(triples):
 
 
 def find_paper_dirs(papers_dir):
-    """<NNN>_<DOI>/ dirs that contain an .xml, sorted by the numeric prefix."""
+    """Return [(id, name, xml_path)]. Auto-detects a flat dir of .xml files or
+    <NNN>_<DOI>/ subfolders."""
+    flat = sorted(glob.glob(os.path.join(papers_dir, "*.xml")))
+    if flat:
+        return [(str(n).zfill(3), os.path.basename(x), x) for n, x in enumerate(flat, 1)]
+
     dirs = []
     for name in os.listdir(papers_dir):
         d = os.path.join(papers_dir, name)
@@ -131,11 +141,11 @@ def audit_one(agent, idx, paper_dir, xml_path):
     doi, title, journal, year = load_meta(paper_dir, xml_path)
     abstract = extract_abstract(xml_path)
 
-    report, triples, _graph_paths, _docs = agent.analyze_xml(xml_path)
+    report, triples, graph_paths, docs = agent.analyze_xml(xml_path)
     clean = clean_triples(triples)
-    # Stable per-triple id used as the scoring key in the web page.
+    key = doi or idx                       # DOI-based id so ratings join back to the paper
     for i, t in enumerate(clean):
-        t["tid"] = f"{idx}#{i}"
+        t["tid"] = f"{key}#{i}"
 
     return {
         "id": idx,
@@ -149,10 +159,13 @@ def audit_one(agent, idx, paper_dir, xml_path):
         },
         "report": report,
         "triples": clean,
+        "graph_paths": graph_paths,
+        "track2_docs": [{"source": d.metadata.get("source", "Unknown"),
+                         "content": d.page_content} for d in docs],
     }
 
 
-def write_data(records, out_path, raw_path=RAW_OUT):
+def write_data(records, out_path, raw_path):
     """Write the records list to benchmark_data.js (+ a raw JSON backup)."""
     records.sort(key=lambda r: r.get("id", ""))
     data = {"generated": datetime.date.today().isoformat(), "papers": records}
@@ -168,21 +181,23 @@ def write_data(records, out_path, raw_path=RAW_OUT):
     print(f"  -> {raw_path}")
 
 
-def assemble(out_path):
+def assemble(out_path, ckpt_dir, raw_path):
     """Collect all checkpoints into benchmark_data.js + a raw JSON backup."""
     records = []
-    for f in sorted(glob.glob(os.path.join(CHECKPOINT_DIR, "*.json"))):
+    for f in sorted(glob.glob(os.path.join(ckpt_dir, "*.json"))):
         try:
             records.append(json.load(open(f, encoding="utf-8")))
         except Exception as ex:
             print(f"  ! skipping unreadable checkpoint {f}: {ex}")
-    write_data(records, out_path)
+    write_data(records, out_path, raw_path)
 
 
 def convert_raw(raw_path, xml_dir, out_path):
     """Convert an existing benchmark raw JSON (from evaluation/benchmark.py — a dict
     keyed by '<doi>.xml' with per-paper 'triples') into benchmark_data.js, WITHOUT
-    running the agent. Metadata (title/journal/year/abstract) is read from xml_dir."""
+    running the agent. Metadata is read from xml_dir. NOTE: such raw JSON has no
+    Track-2 chunks, so the page's Track-2 section will be empty — use the agent path
+    (--papers-dir) if you need Track 2."""
     raw = json.load(open(raw_path, encoding="utf-8"))
     records = []
     for n, fname in enumerate(sorted(raw), 1):
@@ -196,30 +211,28 @@ def convert_raw(raw_path, xml_dir, out_path):
             title, journal, year, abstract = "", "", "", ""
             print(f"  ! {fname}: no XML in {xml_dir}; metadata limited to DOI")
         clean = clean_triples(raw[fname].get("triples", []))
+        key = doi or idx                   # DOI-based id so ratings join back to the paper
         for i, t in enumerate(clean):
-            t["tid"] = f"{idx}#{i}"
+            t["tid"] = f"{key}#{i}"
         records.append({
             "id": idx,
-            "source": {
-                "title": title or fname,
-                "doi": doi,
-                "doi_url": "https://doi.org/" + doi if doi else "",
-                "journal": journal,
-                "year": year,
-                "abstract": abstract[:1500],
-            },
-            "report": "",          # raw benchmark JSON carries no prose report
+            "source": {"title": title or fname, "doi": doi,
+                       "doi_url": "https://doi.org/" + doi if doi else "",
+                       "journal": journal, "year": year, "abstract": abstract[:1500]},
+            "report": "",
             "triples": clean,
+            "graph_paths": raw[fname].get("graph_evidence", []),
+            "track2_docs": [],
         })
-    seed_raw = os.path.join(os.path.dirname(RAW_OUT), "benchmark_data_seed_raw.json")
-    write_data(records, out_path, raw_path=seed_raw)
+    write_data(records, out_path, os.path.join(EVAL_DIR, "benchmark_data_seed_raw.json"))
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--papers-dir", default=DEFAULT_PAPERS_DIR,
-                    help="dir of <NNN>_<DOI>/ paper folders (default: annotation_100_fulltext)")
+                    help="dir of papers (annotation_100_fulltext/ subfolders, or a flat "
+                         "dir of .xml like data/heldout_xml)")
     ap.add_argument("--out", default=DEFAULT_OUT,
                     help="output JS data file (default: visualization/benchmark_data.js)")
     ap.add_argument("--limit", type=int, default=0,
@@ -228,38 +241,44 @@ def main():
                     help="skip auditing; just rebuild the JS file from existing checkpoints")
     ap.add_argument("--from-raw", metavar="PATH",
                     help="seed benchmark_data.js from an existing benchmark raw JSON "
-                         "(evaluation/benchmark.py output) — no agent, no API calls")
+                         "(no agent, no API calls, no Track 2)")
     ap.add_argument("--xml-dir", default=os.path.join(ROOT, "data", "heldout_xml"),
                     help="where to read paper metadata when using --from-raw "
                          "(default: data/heldout_xml)")
     args = ap.parse_args()
 
-    os.makedirs(CHECKPOINT_DIR, exist_ok=True)
-    os.makedirs(os.path.dirname(RAW_OUT), exist_ok=True)
+    os.makedirs(EVAL_DIR, exist_ok=True)
 
     if args.from_raw:
         convert_raw(args.from_raw, args.xml_dir, args.out)
         return
 
+    # checkpoints + raw backup are namespaced by the papers-dir so the held-out seed
+    # and the 100-paper run never collide.
+    base = os.path.basename(os.path.normpath(args.papers_dir))
+    ckpt_dir = os.path.join(EVAL_DIR, base)
+    raw_out = os.path.join(EVAL_DIR, base + "_raw.json")
+    os.makedirs(ckpt_dir, exist_ok=True)
+
     if args.assemble_only:
-        assemble(args.out)
+        assemble(args.out, ckpt_dir, raw_out)
         return
 
     papers = find_paper_dirs(args.papers_dir)
     if args.limit:
         papers = papers[:args.limit]
     if not papers:
-        print(f"No paper dirs with an .xml found under {args.papers_dir}")
+        print(f"No papers with an .xml found under {args.papers_dir}")
         sys.exit(1)
 
     from geoai_audit.agent.audit_agent import DualTrackGeoAIAgent  # noqa: E402
 
-    print(f"Loading agent (graph + embeddings + FAISS)…")
+    print("Loading agent (graph + embeddings + FAISS)…")
     agent = DualTrackGeoAIAgent()          # expensive; built once, reused for all papers
 
     total = len(papers)
     for n, (idx, name, xml_path) in enumerate(papers, 1):
-        ckpt = os.path.join(CHECKPOINT_DIR, f"{idx}.json")
+        ckpt = os.path.join(ckpt_dir, f"{idx}.json")
         if os.path.exists(ckpt):
             print(f"[{n}/{total}] {idx} {name} — checkpoint exists, skip")
             continue
@@ -273,9 +292,10 @@ def main():
             json.dump(rec, f, ensure_ascii=False, indent=1)
         n_inst = sum(1 for t in rec["triples"]
                      if t["edge"].get("instantiation") == "INSTANTIATED")
-        print(f"    triples={len(rec['triples'])} INSTANTIATED={n_inst} -> {os.path.basename(ckpt)}")
+        print(f"    triples={len(rec['triples'])} INSTANTIATED={n_inst} "
+              f"track2={len(rec['track2_docs'])} -> {os.path.basename(ckpt)}")
 
-    assemble(args.out)
+    assemble(args.out, ckpt_dir, raw_out)
 
 
 if __name__ == "__main__":

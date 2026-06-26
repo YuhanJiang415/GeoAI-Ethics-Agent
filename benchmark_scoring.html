@@ -9,7 +9,7 @@
   :root{
     --bg:#f6f8fb; --panel:#ffffff; --panel2:#eef1f6; --line:#dfe3ea;
     --ink:#1f2733; --mut:#6b7480; --acc:#2563eb;
-    --tf:#16a34a; --rm:#d97706; --ei:#dc2626; --mi:#9333ea;
+    --tf:#16a34a; --rm:#d97706; --ei:#dc2626; --mi:#9333ea; --t2:#0d9488;
     --ok:#16a34a; --warn:#d97706; --bad:#dc2626;
   }
   *{box-sizing:border-box}
@@ -18,9 +18,9 @@
     -webkit-font-smoothing:antialiased}
   a{color:var(--acc);text-decoration:none}
 
-  /* ---- top bar (sticky) ---- */
-  .topbar{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.96);
-    backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px}
+  /* ---- top bar (sticky, opaque — no backdrop-filter, which janks on scroll) ---- */
+  .topbar{position:sticky;top:0;z-index:20;background:var(--panel);
+    border-bottom:1px solid var(--line);padding:10px 20px}
   .topbar .row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;max-width:1100px;margin:0 auto}
   .topbar h1{font-size:15px;margin:0;font-weight:700;white-space:nowrap}
   .topbar input[type=text]{font-size:13px;padding:6px 10px;border:1px solid var(--line);
@@ -38,15 +38,22 @@
     background:var(--panel2);color:var(--mut)}
   .tchip b{color:var(--ink)}
 
-  .wrap{max-width:1100px;margin:0 auto;padding:18px 20px 90px;display:grid;
+  /* ---- legend (shown once) ---- */
+  .legend{max-width:1100px;margin:14px auto 0;padding:0 20px}
+  .legend .lg-in{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 16px}
+  .legend h2{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--mut);margin:0 0 9px}
+  .legend .ax{display:grid;grid-template-columns:auto 1fr;gap:6px 11px;font-size:12.5px;line-height:1.5}
+  .legend .ax .n{font-weight:700;color:#334155;white-space:nowrap}
+  .legend .note{margin-top:10px;font-size:11.5px;color:var(--mut);line-height:1.55}
+
+  .wrap{max-width:1100px;margin:14px auto 0;padding:0 20px 90px;display:grid;
     grid-template-columns:230px 1fr;gap:22px}
   @media(max-width:820px){.wrap{grid-template-columns:1fr}}
 
   /* ---- paper navigator ---- */
   .nav{position:sticky;top:96px;align-self:start;max-height:calc(100vh - 120px);overflow:auto;
     background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px}
-  .nav .navhd{font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--mut);
-    padding:6px 8px}
+  .nav .navhd{font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--mut);padding:6px 8px}
   .pitem{display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:7px;cursor:pointer;
     font-size:12px;line-height:1.3}
   .pitem:hover{background:var(--panel2)}
@@ -62,7 +69,6 @@
   .main{min-width:0}
   .pnav{display:flex;align-items:center;gap:10px;margin-bottom:14px}
   .pnav .ptitle{flex:1;font-size:18px;font-weight:700;line-height:1.35;min-width:0}
-
   .src-chips{margin:8px 0 12px;display:flex;gap:8px;flex-wrap:wrap}
   .src-chips .chip{font-size:11.5px;border:1px solid var(--line);border-radius:6px;padding:3px 10px;
     background:var(--panel2);color:var(--ink)}
@@ -77,7 +83,7 @@
     margin:18px 0 12px;display:flex;align-items:center;gap:10px}
   .sectitle::after{content:"";flex:1;height:1px;background:var(--line)}
 
-  /* ---- triples (reused from example.html) ---- */
+  /* ---- triples ---- */
   .chain{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:16px;overflow:hidden}
   .chain .ch-hd{background:var(--panel2);padding:9px 16px;font-size:11px;color:var(--mut);
     display:flex;align-items:center;gap:8px;letter-spacing:.4px;border-bottom:1px solid var(--line)}
@@ -106,24 +112,37 @@
 
   /* ---- scoring row ---- */
   .score{margin-top:13px;border-top:1px dashed var(--line);padding-top:12px}
-  .axes{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
-  .axis{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:9px 11px}
-  .axis .ax-h{font-size:11.5px;font-weight:700;color:#334155}
-  .axis .ax-d{font-size:10.5px;color:var(--mut);line-height:1.45;margin:3px 0 8px}
-  .toggle{display:flex;gap:6px}
-  .toggle button{flex:1;font-size:11.5px;font-weight:700;padding:5px 0;border:1px solid var(--line);
+  .axes{display:flex;gap:18px;flex-wrap:wrap}
+  .axis{display:flex;align-items:center;gap:8px}
+  .axis .ax-h{font-size:12px;font-weight:700;color:#334155}
+  .toggle{display:flex;gap:5px}
+  .toggle button{font-size:11.5px;font-weight:700;padding:4px 12px;border:1px solid var(--line);
     border-radius:6px;background:var(--panel);color:var(--mut);cursor:pointer}
   .toggle button.pass.on{background:var(--ok);border-color:var(--ok);color:#fff}
   .toggle button.fail.on{background:var(--bad);border-color:var(--bad);color:#fff}
   .toggle button:hover{border-color:var(--acc)}
-  .cmt{margin-top:9px}
+  .cmt{margin-top:11px}
   .cmt textarea{width:100%;font-family:inherit;font-size:12px;padding:7px 9px;border:1px solid var(--line);
     border-radius:7px;background:var(--panel);resize:vertical;min-height:34px}
   .cmt .cl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--mut);margin-bottom:3px}
   .trow-done{box-shadow:inset 3px 0 0 var(--ok)}
 
+  /* ---- paper-level note ---- */
+  .pnote{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:16px}
+
+  /* ---- track 2 ---- */
+  .t2{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:13px 16px;
+    font-size:12.5px;color:var(--mut);line-height:1.55}
+  .t2 .intro{margin:0 0 4px}
+  .t2chunk{background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--t2);
+    border-radius:9px;padding:11px 13px;margin-top:11px}
+  .t2src{font-size:11px;font-weight:700;color:var(--t2);font-family:ui-monospace,Menlo,monospace;
+    margin-bottom:7px;word-break:break-all}
+  .t2body{font-size:11.5px;color:#334155;line-height:1.55;max-height:200px;overflow:auto;
+    white-space:pre-wrap;background:#fff;border:1px solid var(--line);border-radius:6px;padding:8px 10px}
+
   .empty{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;
-    color:var(--mut);font-size:13px;line-height:1.6}
+    color:var(--mut);font-size:13px;line-height:1.6;margin-bottom:16px}
   #err{background:#fff3f3;color:#b42318;border:1px solid #f3b4b4;border-radius:10px;padding:14px;margin:20px}
   .notice{background:#f0f7ff;border:1px solid #cfe3fb;border-radius:10px;padding:11px 14px;font-size:12px;
     line-height:1.55;color:#1e3a5f;margin-bottom:14px}
@@ -148,6 +167,21 @@
   <div class="tally" id="tally"></div>
 </div>
 
+<div class="legend">
+  <div class="lg-in">
+    <h2>How to score — three axes, pass / fail per triple</h2>
+    <div class="ax">
+      <span class="n">1 · Groundedness</span>
+      <span>Is this triple really supported by the audited paper? The head (technical feature / data choice) genuinely belongs to this paper, and the cited verbatim quote exists in the text and supports it. Fail = hallucination / mis-attribution. → grounding precision.</span>
+      <span class="n">2 · Causal validity</span>
+      <span>Is head → relation → tail a sound, defensible ethical causal claim (true in the domain-KG sense, not a non-sequitur)? Fail = the causal link itself is wrong. → edge precision.</span>
+      <span class="n">3 · Instantiation verdict</span>
+      <span>Is INSTANTIATED / POTENTIAL / NOT_TRIGGERED correct for this paper? Fail = e.g. a merely "potential" risk marked as already realized, or vice-versa. → verdict precision.</span>
+    </div>
+    <div class="note">Click a button again to clear it. Ratings auto-save in this browser; use <b>Export</b> to download a JSON to send back, and <b>Import</b> to resume from one. Each paper also has a free-text note at the bottom (use it for papers with no triples, or to flag anything missed).</div>
+  </div>
+</div>
+
 <div id="err" style="display:none"></div>
 <div class="wrap" id="app" style="display:none">
   <aside class="nav" id="nav"></aside>
@@ -158,38 +192,37 @@
 
 <script>
 const AXES=[
-  {key:"ground", h:"1 · Groundedness", d:"Triple is really supported by the paper: the head (tech feature / data choice) is in this paper and the verbatim quote exists & supports it. Fail = hallucination / mis-attribution."},
-  {key:"causal", h:"2 · Causal validity", d:"head → relation → tail is a defensible ethical causal claim (true in the domain KG sense, not a non-sequitur). Fail = the causal link itself is wrong."},
-  {key:"typing", h:"3 · Typing & relation", d:"Both ends' ontology types (TechnicalFeature / RiskMechanism / EthicalImpact / Mitigation) and the relation direction (PROMOTES vs INHIBITS) are correct. Fail = type/direction mismatch."},
-  {key:"verdict",h:"4 · Instantiation verdict", d:"INSTANTIATED / POTENTIAL / NOT_TRIGGERED is correct for THIS paper. Fail = e.g. a 'potential' risk wrongly marked as already realized, or vice-versa."},
+  {key:"ground", h:"1 · Groundedness"},
+  {key:"causal", h:"2 · Causal validity"},
+  {key:"verdict",h:"3 · Instantiation verdict"},
 ];
 const TYPEC={TechnicalFeature:"--tf",RiskMechanism:"--rm",EthicalImpact:"--ei",Mitigation:"--mi"};
 const INST_LABEL={INSTANTIATED:"AUDIT FINDING",POTENTIAL:"disclosure",NOT_TRIGGERED:"not triggered"};
-function tc(t){return getComputedStyle(document.documentElement).getPropertyValue(TYPEC[t]||"--mut").trim();}
+const TCOL={};   // type -> color, resolved once at boot (avoids getComputedStyle per render)
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function tc(t){return TCOL[t]||TCOL._mut;}
 
 let DATA=null, PAPERS=[], TOTAL=0, cur=0, ratings={}, expert="", saveCount=0;
 
 function lsKey(name){return "bm_ratings::"+(name||"");}
 function loadRatings(){try{return JSON.parse(localStorage.getItem(lsKey(expert))||"{}");}catch(e){return {};}}
-function persist(){localStorage.setItem(lsKey(expert),JSON.stringify(ratings));}
+
+let persistTimer=null;
+function persist(){clearTimeout(persistTimer);
+  persistTimer=setTimeout(()=>{try{localStorage.setItem(lsKey(expert),JSON.stringify(ratings));}catch(e){}},300);}
+function flush(){clearTimeout(persistTimer);try{localStorage.setItem(lsKey(expert),JSON.stringify(ratings));}catch(e){}}
 
 function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");
   clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),1900);}
 
 function isDone(r){return r&&AXES.every(a=>r[a.key]==="pass"||r[a.key]==="fail");}
-function isPartial(r){return r&&AXES.some(a=>r[a.key]==="pass"||r[a.key]==="fail")&&!isDone(r);}
-
 function paperProgress(p){let done=0;p.triples.forEach(t=>{if(isDone(ratings[t.tid]))done++;});
   return {done,total:p.triples.length};}
 
 function renderTally(){
-  // overall completion
   let done=0;PAPERS.forEach(p=>p.triples.forEach(t=>{if(isDone(ratings[t.tid]))done++;}));
   document.getElementById("prog").innerHTML=`scored <b>${done}</b> / ${TOTAL} triples`;
-  // per-axis precision over rated triples
-  const host=document.getElementById("tally");
-  host.innerHTML=AXES.map(a=>{
+  document.getElementById("tally").innerHTML=AXES.map(a=>{
     let pass=0,fail=0;
     PAPERS.forEach(p=>p.triples.forEach(t=>{const v=(ratings[t.tid]||{})[a.key];
       if(v==="pass")pass++;else if(v==="fail")fail++;}));
@@ -210,8 +243,7 @@ function renderNav(){
       <span class="pi-badge ${cls}">${pr.done}/${pr.total}</span></div>`;
   });
   host.innerHTML=html;
-  host.querySelectorAll(".pitem").forEach(el=>el.onclick=()=>{cur=+el.dataset.i;renderAll();
-    document.getElementById("main").scrollIntoView({block:"start"});});
+  host.querySelectorAll(".pitem").forEach(el=>el.onclick=()=>{cur=+el.dataset.i;renderAll();scrollTop();});
 }
 
 function entHTML(o){o=o||{};return `<span class="ent" style="color:${tc(o.type)};border-color:${tc(o.type)};background:${tc(o.type)}14">
@@ -232,13 +264,12 @@ function tripleHTML(t){
   const r=ratings[t.tid]||{};
   const axesHTML=AXES.map(a=>{
     const v=r[a.key]||"";
-    return `<div class="axis"><div class="ax-h">${esc(a.h)}</div><div class="ax-d">${esc(a.d)}</div>
+    return `<div class="axis"><span class="ax-h">${esc(a.h)}</span>
       <div class="toggle" data-tid="${esc(t.tid)}" data-axis="${a.key}">
         <button class="pass ${v==="pass"?"on":""}" data-v="pass">✓ Pass</button>
         <button class="fail ${v==="fail"?"on":""}" data-v="fail">✗ Fail</button>
       </div></div>`;
   }).join("");
-  const note=esc(r.note||"");
 
   return `<div class="triple ${isDone(r)?"trow-done":""}" id="row-${esc(t.tid)}">
     <div class="flow">${entHTML(h)}
@@ -247,8 +278,18 @@ function tripleHTML(t){
     <div class="badges">${badges}</div>${cond}${ev}${q}${iq}
     <div class="score"><div class="axes">${axesHTML}</div>
       <div class="cmt"><div class="cl">comment (optional)</div>
-        <textarea data-tid="${esc(t.tid)}" placeholder="notes / reasoning…">${note}</textarea></div>
+        <textarea data-tid="${esc(t.tid)}" placeholder="notes / reasoning…">${esc(r.note||"")}</textarea></div>
     </div></div>`;
+}
+
+function track2HTML(p){
+  const t2=p.track2_docs||[];
+  let html=`<p class="intro">Background literature chunks the auditor retrieved from the vector store `+
+    `(used for term definitions / grounding), shown in full with their source:</p>`;
+  if(!t2.length)html+=`<p class="intro">(none retrieved for this paper)</p>`;
+  t2.forEach(c=>{html+=`<div class="t2chunk"><div class="t2src">📄 ${esc(c.source||"Unknown")}</div>`+
+    `<div class="t2body">${esc((c.content||"").trim())}</div></div>`;});
+  return html;
 }
 
 function renderMain(){
@@ -256,20 +297,21 @@ function renderMain(){
   const doiLink=s.doi_url?`<a class="chip doi" href="${esc(s.doi_url)}" target="_blank" rel="noopener">DOI ${esc(s.doi)}</a>`:"";
   const jr=s.journal?`<span class="chip">${esc(s.journal)}</span>`:"";
   const yr=s.year?`<span class="chip">${esc(s.year)}</span>`:"";
-  const abs=s.abstract?`<details class="box"><summary>Abstract</summary><div class="bd">${esc(s.abstract)}</div></details>`:"";
+  const abs=s.abstract?`<details class="box" open><summary>Abstract</summary><div class="bd">${esc(s.abstract)}</div></details>`:"";
 
   let rep=p.report||"";const mk=rep.indexOf("\n---\nAppendix");if(mk>=0)rep=rep.slice(0,mk);
   const repHTML=rep.trim()?`<details class="box"><summary>Agent prose report (context)</summary>
     <div class="bd">${rep.trim().split(/\n\s*\n/).map(x=>`<p>${esc(x.trim())}</p>`).join("")}</div></details>`:"";
 
-  // group triples by chain
   const byChain={};p.triples.forEach(t=>{(byChain[t.chain_id||"chain"]=byChain[t.chain_id||"chain"]||[]).push(t);});
   let chains="";
   Object.entries(byChain).forEach(([cid,steps],ci)=>{
     chains+=`<div class="chain"><div class="ch-hd">⛓ CHAIN ${ci+1} · ${steps.length} step${steps.length>1?"s":""}</div>`+
       steps.map(tripleHTML).join("")+`</div>`;
   });
-  if(!p.triples.length)chains=`<div class="empty">This paper produced no triples.</div>`;
+  if(!p.triples.length)chains=`<div class="empty">This paper produced <b>no triples</b>. Use the note below to record why / anything the audit missed.</div>`;
+
+  const pnoteId=(s.doi||p.id)+"#paper";const pnote=esc((ratings[pnoteId]||{}).note||"");
 
   document.getElementById("main").innerHTML=
     `<div class="pnav">
@@ -280,40 +322,45 @@ function renderMain(){
      <div class="src-chips">${doiLink}${jr}${yr}<span class="chip">${p.triples.length} triples</span></div>
      ${!expert?`<div class="notice">⚠️ Enter your name above to start — ratings are saved under that name in this browser.</div>`:""}
      ${abs}${repHTML}
-     <div class="sectitle">Score each triple (4 axes · pass / fail)</div>
-     ${chains}`;
+     <div class="sectitle">Score each triple</div>
+     ${chains}
+     <div class="sectitle">Paper-level note</div>
+     <div class="pnote"><div class="cl" style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--mut);margin-bottom:5px">free comment for this paper (optional)</div>
+       <textarea class="pnote-ta" data-tid="${esc(pnoteId)}" placeholder="overall comments, missed risks, etc.">${pnote}</textarea></div>
+     <div class="sectitle">Track 2 — vector-store passages the audit referenced</div>
+     <div class="t2">${track2HTML(p)}</div>`;
+
+  // style the paper-note textarea like the others
+  const pta=document.querySelector(".pnote-ta");
+  pta.style.cssText="width:100%;font-family:inherit;font-size:12px;padding:7px 9px;border:1px solid var(--line);border-radius:7px;background:var(--panel);resize:vertical;min-height:46px";
 
   document.getElementById("prev").onclick=()=>{if(cur>0){cur--;renderAll();scrollTop();}};
   document.getElementById("next").onclick=()=>{if(cur<PAPERS.length-1){cur++;renderAll();scrollTop();}};
 
-  // wire toggles
   document.querySelectorAll(".toggle").forEach(tg=>{
     tg.querySelectorAll("button").forEach(b=>b.onclick=()=>{
       if(!requireExpert())return;
       const tid=tg.dataset.tid,axis=tg.dataset.axis,v=b.dataset.v;
       const r=ratings[tid]||(ratings[tid]={});
-      r[axis]=(r[axis]===v)?undefined:v;   // click again to clear
-      if(r[axis]===undefined)delete r[axis];
-      r.ts=Date.now();
-      save();
-      // update buttons in place
+      if(r[axis]===v)delete r[axis];else r[axis]=v;   // click again to clear
+      r.ts=Date.now();persist();bumpSave();
       tg.querySelectorAll("button").forEach(x=>x.classList.toggle("on",r[x.dataset.v]===x.dataset.v));
-      document.getElementById("row-"+CSS.escape(tid)).classList.toggle("trow-done",isDone(r));
+      document.getElementById("row-"+tid).classList.toggle("trow-done",isDone(r));
       renderNavLight();renderTally();
     });
   });
-  // wire comments
-  document.querySelectorAll(".cmt textarea").forEach(ta=>{
+  document.querySelectorAll("textarea[data-tid]").forEach(ta=>{
     ta.addEventListener("input",()=>{
-      if(!requireExpert()){ta.blur();return;}
+      if(!expert){requireExpert();return;}
       const tid=ta.dataset.tid;const r=ratings[tid]||(ratings[tid]={});
-      r.note=ta.value;r.ts=Date.now();save(true);
+      r.note=ta.value;r.ts=Date.now();persist();
     });
   });
 }
 
-function renderNavLight(){ // refresh only the active paper's badge
-  const p=PAPERS[cur];const pr=paperProgress(p);
+function bumpSave(){saveCount++;if(saveCount%25===0)toast("💾 Saved locally — remember to Export a backup.");}
+function renderNavLight(){
+  const pr=paperProgress(PAPERS[cur]);
   const el=document.querySelector(`.pitem[data-i="${cur}"] .pi-badge`);
   if(el){el.textContent=`${pr.done}/${pr.total}`;
     el.className="pi-badge "+(pr.total&&pr.done===pr.total?"done":(pr.done?"part":""));}
@@ -321,67 +368,50 @@ function renderNavLight(){ // refresh only the active paper's badge
 function renderAll(){renderNav();renderMain();renderTally();}
 function scrollTop(){window.scrollTo({top:0});}
 
-let saveTimer=null;
-function save(debounce){
-  persist();
-  saveCount++;
-  if(saveCount%25===0)toast("💾 Saved locally — remember to Export a backup.");
-  if(debounce){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{},0);}
-}
-
 function requireExpert(){
   if(expert)return true;
   document.getElementById("expert").focus();
   toast("Enter your name first.");
   return false;
 }
-
 function setExpert(name){
-  expert=(name||"").trim();
-  localStorage.setItem("bm_expert",expert);
-  ratings=loadRatings();
-  renderAll();
+  const nn=(name||"").trim();
+  if(nn===expert)return;
+  flush();
+  expert=nn;localStorage.setItem("bm_expert",expert);
+  ratings=loadRatings();renderAll();
 }
 
-// ---- export / import ----
 function doExport(){
   if(!expert){requireExpert();return;}
+  flush();
   const counts={};let done=0;
   AXES.forEach(a=>counts[a.key]={pass:0,fail:0});
   PAPERS.forEach(p=>p.triples.forEach(t=>{const r=ratings[t.tid]||{};
     if(isDone(r))done++;
     AXES.forEach(a=>{if(r[a.key]==="pass")counts[a.key].pass++;else if(r[a.key]==="fail")counts[a.key].fail++;});}));
-  const payload={
-    expert, exported:new Date().toISOString(),
-    data_generated:(DATA&&DATA.generated)||"",
-    scored_triples:done, total_triples:TOTAL, counts, ratings
-  };
+  const payload={expert,exported:new Date().toISOString(),data_generated:(DATA&&DATA.generated)||"",
+    scored_triples:done,total_triples:TOTAL,counts,ratings};
   const blob=new Blob([JSON.stringify(payload,null,1)],{type:"application/json"});
   const a=document.createElement("a");
-  const safe=expert.replace(/[^a-z0-9_-]+/gi,"_");
-  const day=new Date().toISOString().slice(0,10);
-  a.href=URL.createObjectURL(blob);a.download=`ratings_${safe}_${day}.json`;
+  a.href=URL.createObjectURL(blob);
+  a.download=`ratings_${expert.replace(/[^a-z0-9_-]+/gi,"_")}_${new Date().toISOString().slice(0,10)}.json`;
   document.body.appendChild(a);a.click();a.remove();
   toast("Exported "+a.download);
 }
-
 function doImport(file){
   const fr=new FileReader();
-  fr.onload=()=>{
-    try{
-      const obj=JSON.parse(fr.result);
-      const incoming=obj.ratings||obj;        // accept a bare ratings map too
-      if(typeof incoming!=="object")throw new Error("no ratings object found");
-      if(obj.expert&&!expert){document.getElementById("expert").value=obj.expert;setExpert(obj.expert);}
-      let n=0;Object.entries(incoming).forEach(([tid,r])=>{ratings[tid]=Object.assign(ratings[tid]||{},r);n++;});
-      persist();renderAll();
-      toast(`Imported ${n} triple ratings`+(obj.expert?` (${obj.expert})`:""));
-    }catch(e){alert("Import failed: "+e.message);}
-  };
+  fr.onload=()=>{try{
+    const obj=JSON.parse(fr.result);const incoming=obj.ratings||obj;
+    if(typeof incoming!=="object")throw new Error("no ratings object found");
+    if(obj.expert&&!expert){document.getElementById("expert").value=obj.expert;setExpert(obj.expert);}
+    let n=0;Object.entries(incoming).forEach(([tid,r])=>{ratings[tid]=Object.assign(ratings[tid]||{},r);n++;});
+    flush();renderAll();
+    toast(`Imported ${n} entries`+(obj.expert?` (${obj.expert})`:""));
+  }catch(e){alert("Import failed: "+e.message);}};
   fr.readAsText(file);
 }
 
-// ---- boot ----
 try{
   if(typeof window.BENCHMARK_DATA==="undefined")
     throw new Error("benchmark_data.js failed to load. Run: python visualization/build_benchmark_data.py");
@@ -389,6 +419,11 @@ try{
   PAPERS=DATA.papers||[];
   TOTAL=PAPERS.reduce((s,p)=>s+(p.triples?p.triples.length:0),0);
   if(!PAPERS.length)throw new Error("benchmark_data.js has no papers.");
+
+  // resolve type colors once
+  const cs=getComputedStyle(document.documentElement);
+  for(const k in TYPEC)TCOL[k]=cs.getPropertyValue(TYPEC[k]).trim();
+  TCOL._mut=cs.getPropertyValue("--mut").trim();
 
   document.getElementById("app").style.display="grid";
   const ex=document.getElementById("expert");
@@ -401,6 +436,7 @@ try{
   document.getElementById("exportBtn").onclick=doExport;
   document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
   document.getElementById("importFile").onchange=e=>{if(e.target.files[0])doImport(e.target.files[0]);e.target.value="";};
+  window.addEventListener("beforeunload",flush);
   window.addEventListener("keydown",e=>{
     if(e.target.tagName==="TEXTAREA"||e.target.tagName==="INPUT")return;
     if(e.key==="ArrowLeft"&&cur>0){cur--;renderAll();scrollTop();}
