@@ -49,7 +49,7 @@ LEVEL = {"TechnicalFeature": 0, "RiskMechanism": 1, "EthicalImpact": 2,
          "Mitigation": 1, "HarmCategory": 3, "Concept": 1}
 
 
-def main(full=False, graph_path=None, out_path=None):
+def main(full=False, graph_path=None, out_path=None, res_path=None, hier_path=None):
     graph = graph_path or GRAPH
     out = out_path or OUT
     if not os.path.exists(graph):
@@ -59,15 +59,16 @@ def main(full=False, graph_path=None, out_path=None):
     # merge + hierarchy provenance, so the viz can show what collapsed into what
     art = os.path.join(ROOT, "artifacts")
     merged_from = {}
-    res_path = os.path.join(art, "entity_resolution.json")
+    res_path = res_path or os.path.join(art, "entity_resolution.json")
     if os.path.exists(res_path):
         for entry in json.load(open(res_path, encoding="utf-8")):
-            for g in entry.get("decision_groups", []):
+            # "decision_groups" = LLM run; "consensus_groups" = consensus run
+            for g in entry.get("decision_groups") or entry.get("consensus_groups") or []:
                 mem, canon = g.get("members", []), g.get("canonical")
                 if len(mem) > 1:
                     merged_from[canon] = [m for m in mem if m != canon]
     concept_of = {}
-    hier_path = os.path.join(art, "hierarchy.json")
+    hier_path = hier_path or os.path.join(art, "hierarchy.json")
     if os.path.exists(hier_path):
         for h in json.load(open(hier_path, encoding="utf-8")):
             concept_of[h["child"]] = h["parent"]
