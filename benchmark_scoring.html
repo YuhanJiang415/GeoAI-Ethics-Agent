@@ -4,7 +4,8 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>GeoAI Ethics Auditor · Expert Scoring</title>
-<script src="benchmark_data.js"></script>
+<script src="benchmark_data_claude.js"></script>
+<script src="benchmark_data_gemini.js"></script>
 <style>
   :root{
     --bg:#f6f8fb; --panel:#ffffff; --panel2:#eef1f6; --line:#dfe3ea;
@@ -31,6 +32,13 @@
   .btn.primary{background:var(--acc);color:#fff;border-color:var(--acc)}
   .btn.primary:hover{background:#1d4ed8;color:#fff}
   .grow{flex:1}
+  /* ---- source switcher (Claude / Gemini auditor) ---- */
+  .srcsw{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .srcsw .src-b{font-size:12px;font-weight:700;padding:5px 13px;border:none;background:var(--panel);
+    color:var(--mut);cursor:pointer;border-right:1px solid var(--line)}
+  .srcsw .src-b:last-child{border-right:none}
+  .srcsw .src-b:hover{color:var(--acc)}
+  .srcsw .src-b.on{background:var(--acc);color:#fff}
   .prog{font-size:12.5px;color:var(--mut);white-space:nowrap}
   .prog b{color:var(--ink)}
   .tally{display:flex;gap:6px;flex-wrap:wrap;max-width:1100px;margin:8px auto 0}
@@ -156,6 +164,10 @@
 <div class="topbar">
   <div class="row">
     <h1>🧪 Expert scoring</h1>
+    <div class="srcsw" id="srcsw">
+      <button class="src-b on" data-src="claude">Claude</button>
+      <button class="src-b" data-src="gemini">Gemini</button>
+    </div>
     <label class="prog">Expert:&nbsp;</label>
     <input type="text" id="expert" placeholder="your name / id" autocomplete="off"/>
     <span class="grow"></span>
@@ -204,8 +216,11 @@ function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;","
 function tc(t){return TCOL[t]||TCOL._mut;}
 
 let DATA=null, PAPERS=[], TOTAL=0, cur=0, ratings={}, expert="", saveCount=0;
+let SOURCES={}, source="claude";   // which auditor's triples are shown/scored
 
-function lsKey(name){return "bm_ratings::"+(name||"");}
+// ratings are namespaced per auditor: Claude and Gemini produce different triples
+// that share the same "<doi>#<i>" tids, so they must NOT share storage.
+function lsKey(name){return "bm_ratings::"+(name||"")+"::"+source;}
 function loadRatings(){try{return JSON.parse(localStorage.getItem(lsKey(expert))||"{}");}catch(e){return {};}}
 
 let persistTimer=null;
@@ -382,6 +397,18 @@ function setExpert(name){
   expert=nn;localStorage.setItem("bm_expert",expert);
   ratings=loadRatings();renderAll();
 }
+function setSource(src){
+  if(src===source||!SOURCES[src])return;
+  flush();                       // persist current source's ratings before switching
+  source=src;localStorage.setItem("bm_source",source);
+  DATA=SOURCES[source];
+  PAPERS=DATA.papers||[];
+  TOTAL=PAPERS.reduce((s,p)=>s+(p.triples?p.triples.length:0),0);
+  cur=Math.min(cur,Math.max(0,PAPERS.length-1));
+  ratings=loadRatings();         // re-load ratings namespaced to the new source
+  document.querySelectorAll("#srcsw .src-b").forEach(b=>b.classList.toggle("on",b.dataset.src===source));
+  renderAll();scrollTop();
+}
 
 function validIds(){   // tids in the CURRENT dataset (+ per-paper note ids)
   const s=new Set();
@@ -400,12 +427,12 @@ function doExport(){
   // older page versions, e.g. different id schemes or removed axes)
   const valid=validIds();const cleanRatings={};
   Object.keys(ratings).forEach(k=>{if(valid.has(k))cleanRatings[k]=ratings[k];});
-  const payload={expert,exported:new Date().toISOString(),data_generated:(DATA&&DATA.generated)||"",
+  const payload={expert,source,exported:new Date().toISOString(),data_generated:(DATA&&DATA.generated)||"",
     scored_triples:done,total_triples:TOTAL,counts,ratings:cleanRatings};
   const blob=new Blob([JSON.stringify(payload,null,1)],{type:"application/json"});
   const a=document.createElement("a");
   a.href=URL.createObjectURL(blob);
-  a.download=`ratings_${expert.replace(/[^a-z0-9_-]+/gi,"_")}_${new Date().toISOString().slice(0,10)}.json`;
+  a.download=`ratings_${source}_${expert.replace(/[^a-z0-9_-]+/gi,"_")}_${new Date().toISOString().slice(0,10)}.json`;
   document.body.appendChild(a);a.click();a.remove();
   toast("Exported "+a.download);
 }
@@ -414,6 +441,7 @@ function doImport(file){
   fr.onload=()=>{try{
     const obj=JSON.parse(fr.result);const incoming=obj.ratings||obj;
     if(typeof incoming!=="object")throw new Error("no ratings object found");
+    if(obj.source&&SOURCES[obj.source]&&obj.source!==source)setSource(obj.source);
     if(obj.expert&&!expert){document.getElementById("expert").value=obj.expert;setExpert(obj.expert);}
     let n=0;Object.entries(incoming).forEach(([tid,r])=>{ratings[tid]=Object.assign(ratings[tid]||{},r);n++;});
     flush();renderAll();
@@ -423,12 +451,23 @@ function doImport(file){
 }
 
 try{
-  if(typeof window.BENCHMARK_DATA==="undefined")
-    throw new Error("benchmark_data.js failed to load. Run: python visualization/build_benchmark_data.py");
-  DATA=window.BENCHMARK_DATA;
+  SOURCES={claude:window.BENCHMARK_DATA_CLAUDE, gemini:window.BENCHMARK_DATA_GEMINI};
+  if(!SOURCES.claude&&!SOURCES.gemini)
+    throw new Error("benchmark_data_claude.js / benchmark_data_gemini.js failed to load. Run: python visualization/build_benchmark_data.py");
+  source=localStorage.getItem("bm_source")||"claude";
+  if(!SOURCES[source])source=SOURCES.claude?"claude":"gemini";
+  DATA=SOURCES[source];
   PAPERS=DATA.papers||[];
   TOTAL=PAPERS.reduce((s,p)=>s+(p.triples?p.triples.length:0),0);
-  if(!PAPERS.length)throw new Error("benchmark_data.js has no papers.");
+  if(!PAPERS.length)throw new Error("selected benchmark dataset has no papers.");
+  document.querySelectorAll("#srcsw .src-b").forEach(b=>{
+    const d=SOURCES[b.dataset.src];
+    if(d){const n=(d.papers||[]).reduce((s,p)=>s+(p.triples?p.triples.length:0),0);
+      b.innerHTML=`${b.textContent} <span style="opacity:.7;font-weight:600">${n}</span>`;}
+    else b.disabled=true;
+    b.classList.toggle("on",b.dataset.src===source);
+    b.onclick=()=>setSource(b.dataset.src);
+  });
 
   // resolve type colors once
   const cs=getComputedStyle(document.documentElement);
